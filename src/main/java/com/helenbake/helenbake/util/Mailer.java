@@ -42,17 +42,17 @@ public class Mailer {
     }
     @Async
     public void mailUserAsync(User user, String message, String subject) throws MessagingException {
-        mailUserAsync(user.getEmail(), message, subject);
+       // mailUserAsync(user.getEmail(), message, subject);
     }
 
     @Async
     public void mailUserAsync(User user, String message, String subject,String senderEmail) throws MessagingException {
-        mailUserAsync(user.getEmail(), message, subject,senderEmail);
+       // mailUserAsync(user.getEmail(), message, subject,senderEmail);
     }
 
     @Async
     public void mailUserAsyncAttach(User user,String message, String subject, InputStreamSource inputStreamResource) throws MessagingException {
-        mailUserAsync(user.getEmail(), message, subject);
+        //mailUserAsync(user.getEmail(), message, subject);
     }
 
     @Async
@@ -75,11 +75,7 @@ public class Mailer {
     public void mailUsersAsync(List<User> users, String message, String subject) {
         users.forEach(user -> {
             String msg = message.replace("{firstName}", user.getFirstName());
-            try {
-                mailUserAsync(user.getEmail(), msg, subject);
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
+            // mailUserAsync(user.getEmail(), msg, subject);
         });
     }
 
@@ -89,7 +85,7 @@ public class Mailer {
     }
 
     public void mailUser(User user, String message, String subject) throws MessagingException {
-        mailUser(user.getEmail(), message, subject);
+        //mailUser(user.getEmail(), message, subject);
     }
 
     public void mailUser(String to, String message, String subject) throws MessagingException {
@@ -100,7 +96,7 @@ public class Mailer {
     public void mailUsers(List<User> users, String message, String subject) throws MessagingException {
         for (User user: users) {
             String msg = message.replace("{firstName}", user.getFirstName());
-            mailUser(user.getEmail(), msg, subject);
+           // mailUser(user.getEmail(), msg, subject);
         }
     }
 }

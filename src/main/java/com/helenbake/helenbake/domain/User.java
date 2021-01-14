@@ -22,10 +22,6 @@ public class User extends BaseEntity{
     @Column(name = "first_name")
     private String firstName;
 
-    @Email
-    @Column(name = "email", unique = true)
-    private String email;
-
     @NotNull
     @Column(name = "last_name")
     private String lastName = "";
@@ -128,14 +124,6 @@ public class User extends BaseEntity{
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPasscode() {

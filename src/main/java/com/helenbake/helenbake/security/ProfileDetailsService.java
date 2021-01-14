@@ -16,7 +16,7 @@ public class ProfileDetailsService implements UserDetailsService {
     private UserRepository userDao;
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userDao.findByPhoneNumber(username);
+        User user = userDao.findByPhoneNumber(username).get();
         if(user == null){
             throw new UsernameNotFoundException("Invalid ID or password.");
         }

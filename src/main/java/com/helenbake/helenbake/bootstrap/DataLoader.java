@@ -58,11 +58,10 @@ public class DataLoader implements ApplicationListener<ContextRefreshedEvent> {
             user.setFirstName("Gold");
             user.setLastName("Osawota");
             user.setPhoneNumber("08131248746");
-            user.setEmail("goldtive@gmail.com");
             user.setPassword(encoder.encode("password"));
             user.setStatus(GenericStatus.ACTIVE);
             user.setIsdeleted(false);
-            Role role = roleRepository.findByName(RoleType.SUPER_ADMIN);
+            Role role = roleRepository.findByName(RoleType.SUPER_ADMIN).get();
             user.setRole(role);
             saveUsers.add(user);
             saveUsers = userRepository.saveAll(saveUsers);
@@ -74,7 +73,7 @@ public class DataLoader implements ApplicationListener<ContextRefreshedEvent> {
 
     private void seedRoles() {
         Arrays.stream(RoleType.values()).forEach(roleType -> {
-            Role role = roleRepository.findByName(roleType);
+            Role role = roleRepository.findByName(roleType).orElse(null);
             if (role == null) {
                 role = new Role();
                 role.setName(roleType);
