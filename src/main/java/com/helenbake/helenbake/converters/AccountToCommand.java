@@ -18,6 +18,8 @@ public class AccountToCommand implements Converter<Account, AccountCommand> {
         accountCommand.setFrom(source.getFromDate());
         accountCommand.setDescription(source.getDescription());
         accountCommand.setAmount(source.getAmount());
+        accountCommand.setAccountstatus(source.getAccountstatus());
+        accountCommand.setSoldSoFar(source.getSoldSoFar());
 
         return accountCommand;
     }

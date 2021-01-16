@@ -20,6 +20,8 @@ public class Account extends BaseEntity{
     private Boolean accountstatus=Boolean.FALSE;
     @NotNull
     private BigDecimal amount= new BigDecimal("0.00");
+
+    private BigDecimal soldSoFar = new BigDecimal("0.00");
     public LocalDate getToDate() {
         return toDate;
     }
@@ -58,5 +60,13 @@ public class Account extends BaseEntity{
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public BigDecimal getSoldSoFar() {
+        return soldSoFar;
+    }
+
+    public void setSoldSoFar(BigDecimal soldSoFar) {
+        this.soldSoFar = soldSoFar;
     }
 }
