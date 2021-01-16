@@ -1,6 +1,7 @@
 package com.helenbake.helenbake.command;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class AccountCommand {
@@ -12,8 +13,9 @@ public class AccountCommand {
     @NotNull
     private String description;
     @NotNull
-    private Boolean accountstatus;
-
+    private Boolean accountstatus=Boolean.FALSE;
+    @NotNull
+    private BigDecimal amount= new BigDecimal("0.00");
     public Long getId() {
         return id;
     }
@@ -52,5 +54,13 @@ public class AccountCommand {
 
     public void setAccountstatus(Boolean accountstatus) {
         this.accountstatus = accountstatus;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 }

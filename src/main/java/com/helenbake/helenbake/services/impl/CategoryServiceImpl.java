@@ -80,6 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
         previous.setName(usercurrent.getName());
         previous.setDescription(usercurrent.getDescription());
         previous.setUpdatedBy(inputer.getId());
+        previous.setDateupdated(LocalDate.now());
         return categoryItemToCommand.convert(categoryItemRepository.saveAndFlush(previous));
     }
 

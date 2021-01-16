@@ -15,9 +15,10 @@ public class CommandToAccount implements Converter<AccountCommand, Account> {
         }
         final Account account= new Account();
         account.setId(source.getId());
-        account.setTo(source.getTo());
-        account.setFrom(source.getFrom());
+        account.setToDate(source.getTo());
+        account.setFromDate(source.getFrom());
         account.setDescription(source.getDescription());
+        account.setAmount(source.getAmount());
         return  account;
     }
 }

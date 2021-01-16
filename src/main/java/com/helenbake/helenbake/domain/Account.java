@@ -1,35 +1,39 @@
 package com.helenbake.helenbake.domain;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "tbaccount")
 public class Account extends BaseEntity{
 
-    private LocalDate to;
+    private LocalDate toDate;
 
-    private LocalDate from;
+    private LocalDate fromDate;
 
     private String description;
-
+    @Column(nullable = false)
     private Boolean accountstatus=Boolean.FALSE;
-
-    public LocalDate getTo() {
-        return to;
+    @NotNull
+    private BigDecimal amount= new BigDecimal("0.00");
+    public LocalDate getToDate() {
+        return toDate;
     }
 
-    public void setTo(LocalDate to) {
-        this.to = to;
+    public void setToDate(LocalDate toDate) {
+        this.toDate = toDate;
     }
 
-    public LocalDate getFrom() {
-        return from;
+    public LocalDate getFromDate() {
+        return fromDate;
     }
 
-    public void setFrom(LocalDate from) {
-        this.from = from;
+    public void setFromDate(LocalDate fromDate) {
+        this.fromDate = fromDate;
     }
 
     public String getDescription() {
@@ -46,5 +50,13 @@ public class Account extends BaseEntity{
 
     public void setAccountstatus(Boolean accountstatus) {
         this.accountstatus = accountstatus;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 }

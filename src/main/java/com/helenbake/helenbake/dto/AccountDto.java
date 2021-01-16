@@ -1,6 +1,7 @@
 package com.helenbake.helenbake.dto;
 
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 
 public class AccountDto {
@@ -12,7 +13,9 @@ public class AccountDto {
     @NotNull
     private String description;
 
-    private Boolean accountstatus;
+    private Boolean accountstatus= Boolean.FALSE;
+    @NotNull
+    private BigDecimal amount= new BigDecimal("0.00");
 
     public Long getId() {
         return id;
@@ -52,5 +55,13 @@ public class AccountDto {
 
     public void setAccountstatus(Boolean accountstatus) {
         this.accountstatus = accountstatus;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 }
