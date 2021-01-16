@@ -42,7 +42,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account editAccount(AccountCommand account,Account previous, Long id) {
-        if(manipulateAccount(account))
+        if(manipulateAccountEdit(account,previous))
         {
             return null;
         }
@@ -66,6 +66,23 @@ public class AccountServiceImpl implements AccountService {
                     || account.getTo().isEqual(account1.getFromDate()) || account.getTo().isEqual(account1.getToDate())) {
                 status = true;
 
+            }
+            break;
+        }
+        return status;
+    }
+
+    private Boolean manipulateAccountEdit(AccountCommand account,Account previous) {
+        Boolean status = false;
+        for (Account account1 : accountRepository.findAll()) {
+            if(previous.getId() !=account.getId()) {
+                if ((account.getTo().isAfter(account1.getFromDate()) && account.getTo().isBefore(account1.getToDate()))
+                        || (account.getFrom().isAfter(account1.getFromDate()) && account.getFrom().isBefore(account1.getToDate()))
+                        || account.getFrom().isEqual(account1.getFromDate()) || account.getFrom().isEqual(account1.getToDate())
+                        || account.getTo().isEqual(account1.getFromDate()) || account.getTo().isEqual(account1.getToDate())) {
+                    status = true;
+
+                }
             }
             break;
         }

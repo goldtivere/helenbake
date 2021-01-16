@@ -162,6 +162,7 @@ public class AccountController {
             return ResponseEntity.ok(transactionStatus);
         }
         AccountCommand accountCommand= new AccountCommand();
+        accountCommand.setId(accountDto.getId());
         accountCommand.setTo(to);
         accountCommand.setFrom(from);
         accountCommand.setAccountstatus(accountDto.getAccountstatus());
