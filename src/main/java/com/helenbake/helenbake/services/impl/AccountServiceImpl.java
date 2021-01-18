@@ -1,10 +1,14 @@
 package com.helenbake.helenbake.services.impl;
 
 import com.helenbake.helenbake.command.AccountCommand;
+import com.helenbake.helenbake.command.AccountIDetailsCommand;
+import com.helenbake.helenbake.converters.AccountDetailsToCommand;
 import com.helenbake.helenbake.converters.AccountToCommand;
 import com.helenbake.helenbake.domain.Account;
+import com.helenbake.helenbake.domain.AccountDetails;
 import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.repo.AccountDetailsRepository;
 import com.helenbake.helenbake.repo.AccountRepository;
 import com.helenbake.helenbake.services.AccountService;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -19,10 +23,16 @@ public class AccountServiceImpl implements AccountService {
 
     private AccountRepository accountRepository;
     private AccountToCommand accountToCommand;
+    private AccountDetailsRepository accountDetailsRepository;
+    private AccountDetailsToCommand accountDetailsToCommand;
 
-    public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand) {
+    public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand,
+                              AccountDetailsRepository accountDetailsRepository,
+                              AccountDetailsToCommand accountDetailsToCommand) {
         this.accountRepository = accountRepository;
         this.accountToCommand = accountToCommand;
+        this.accountDetailsRepository = accountDetailsRepository;
+        this.accountDetailsToCommand = accountDetailsToCommand;
     }
 
     @Override
@@ -110,5 +120,17 @@ public class AccountServiceImpl implements AccountService {
             oldValue.setDateupdated(LocalDate.now());
         }
         return accountRepository.saveAndFlush(oldValue);
+    }
+
+    @Override
+    public AccountDetails createAccountItem(AccountDetails accountDetails) {
+        return accountDetailsRepository.saveAndFlush(accountDetails);
+    }
+
+    @Override
+    public Page<AccountIDetailsCommand> listAllAccountItems(BooleanExpression expression, Pageable pageable) {
+        Page<AccountDetails> accounts = accountDetailsRepository.findAll(expression, pageable);
+        Page<AccountIDetailsCommand> accountIDetailsCommands = accounts.map(accountDetailsToCommand::convert);
+        return accountIDetailsCommands;
     }
 }

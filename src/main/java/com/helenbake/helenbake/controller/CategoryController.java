@@ -3,12 +3,17 @@ package com.helenbake.helenbake.controller;
 
 import com.helenbake.helenbake.command.CategoryCommand;
 import com.helenbake.helenbake.command.CategoryItemCommand;
+import com.helenbake.helenbake.domain.AccountDetails;
 import com.helenbake.helenbake.domain.Category;
 import com.helenbake.helenbake.domain.CategoryItem;
 import com.helenbake.helenbake.domain.User;
+import com.helenbake.helenbake.dto.AccountDet;
+import com.helenbake.helenbake.dto.CategoryIte;
 import com.helenbake.helenbake.dto.Response;
+import com.helenbake.helenbake.dto.TransactionStatus;
 import com.helenbake.helenbake.repo.CategoryItemRepository;
 import com.helenbake.helenbake.repo.CategoryRepository;
+import com.helenbake.helenbake.repo.UserRepository;
 import com.helenbake.helenbake.repo.predicate.CustomPredicateBuilder;
 import com.helenbake.helenbake.repo.predicate.Operation;
 import com.helenbake.helenbake.security.ProfileDetails;
@@ -30,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -39,16 +46,19 @@ public class CategoryController {
     private CategoryService categoryService;
     private CategoryRepository catergoryRepository;
     private CategoryItemRepository categoryItemRepository;
+    private UserRepository userRepository;
 
     Logger logger = LoggerFactory.getLogger(CategoryController.class);
 
     public CategoryController(CategoryService categoryService,
                               CategoryRepository catergoryRepository,
-                              CategoryItemRepository categoryItemRepository)
+                              CategoryItemRepository categoryItemRepository,
+                              UserRepository userRepository)
     {
         this.categoryService = categoryService;
         this.catergoryRepository = catergoryRepository;
         this.categoryItemRepository = categoryItemRepository;
+        this.userRepository = userRepository;
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -211,9 +221,33 @@ public class CategoryController {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @GetMapping("/categoryName/{id}")
+    @GetMapping("categoryName/{id}")
     public ResponseEntity<CategoryCommand> getCategoryName(@PathVariable("id") Long id) {
         return ResponseEntity.ok(categoryService.getCategoryName(id));
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("categoryItemList")
+    public ResponseEntity<List<CategoryIte>> CategoryItemList(@AuthenticationPrincipal ProfileDetails profileDetails) {
+
+        TransactionStatus transactionStatus = new TransactionStatus();
+        Optional<User> user = userRepository.findByDeletedAndId(false, profileDetails.toUser().getId());
+        if (!user.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("User does not exist!!");
+            return ResponseEntity.notFound().build();
+        }
+
+        List<CategoryIte> categoryItes= new ArrayList<>();
+        for(CategoryItem categoryItem: categoryItemRepository.findAll()){
+            CategoryIte cat= new CategoryIte();
+            cat.setCategoryId(categoryItem.getId());
+            cat.setName(categoryItem.getName());
+
+            categoryItes.add(cat);
+        }
+        logger.info("Category Item retrieval successful at " + LocalDateTime.now());
+        return ResponseEntity.ok(categoryItes);
     }
 
 }
