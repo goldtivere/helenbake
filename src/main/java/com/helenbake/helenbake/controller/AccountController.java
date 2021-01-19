@@ -260,9 +260,19 @@ public class AccountController {
         }
         Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
 
+
         if(!categoryItem.isPresent())
         {
-            return ResponseEntity.notFound().build();
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Item does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
+        if(accountDetais.isPresent())
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Item Already Exists!");
+            return ResponseEntity.ok(transactionStatus);
         }
         AccountDetails accountDetails = new AccountDetails();
         accountDetails.setCategoryItem(categoryItem.get());
@@ -270,9 +280,59 @@ public class AccountController {
         accountDetails.setCreatedBy(user2.getId());
         AccountDetails account = accountService.createAccountItem(accountDetails);
 
-        logger.info("New Account Details created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
+        logger.info("New Account Item created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
         transactionStatus.setStatus(true);
-        transactionStatus.setMessage("New Account created");
+        transactionStatus.setMessage("New Account Item created");
+        return ResponseEntity.ok(transactionStatus);
+    }
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PutMapping("editAccountItem")
+    public ResponseEntity<?> editAccountItem(@RequestBody @Valid AccountIDetailsCommand accountDto, BindingResult bindingResult,
+                                         @AuthenticationPrincipal ProfileDetails profileDetails) {
+
+        if (bindingResult.hasErrors() || accountDto == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        TransactionStatus transactionStatus = new TransactionStatus();
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
+
+
+        if(!categoryItem.isPresent())
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Account Item Does not Exist!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<AccountDetails> doesExist = accountDetailsRepository.findById(accountDto.getId());
+        if (!doesExist.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Account Item Does not Exist!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
+        if(accountDetais.isPresent() && (accountDetais.get().getId() != doesExist.get().getId()))
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Category Item Already Exists!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        if(!accountDetais.isPresent())
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Category Item does not exist for this Account Item!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+
+        AccountDetails account = accountService.editAccountItems(accountDto, categoryItem.get(),doesExist.get(), user2.getId());
+
+        logger.info("Account Item Edited at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
+        transactionStatus.setStatus(true);
+        transactionStatus.setMessage("Account Item Edited!");
         return ResponseEntity.ok(transactionStatus);
     }
 }

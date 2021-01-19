@@ -6,6 +6,7 @@ import com.helenbake.helenbake.converters.AccountDetailsToCommand;
 import com.helenbake.helenbake.converters.AccountToCommand;
 import com.helenbake.helenbake.domain.Account;
 import com.helenbake.helenbake.domain.AccountDetails;
+import com.helenbake.helenbake.domain.CategoryItem;
 import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.dto.AccountDto;
 import com.helenbake.helenbake.repo.AccountDetailsRepository;
@@ -132,5 +133,14 @@ public class AccountServiceImpl implements AccountService {
         Page<AccountDetails> accounts = accountDetailsRepository.findAll(expression, pageable);
         Page<AccountIDetailsCommand> accountIDetailsCommands = accounts.map(accountDetailsToCommand::convert);
         return accountIDetailsCommands;
+    }
+
+    @Override
+    public AccountDetails editAccountItems(AccountIDetailsCommand account, CategoryItem categoryItem, AccountDetails previous, Long id) {
+        previous.setPricePerUnit(account.getPricePerUnit());
+        previous.setCategoryItem(categoryItem);
+        previous.setUpdatedBy(id);
+        previous.setDateupdated(LocalDate.now());
+        return accountDetailsRepository.saveAndFlush(previous);
     }
 }

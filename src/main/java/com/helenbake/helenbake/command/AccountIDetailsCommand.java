@@ -9,6 +9,8 @@ public class AccountIDetailsCommand {
     @NotNull
     private String name;
     @NotNull
+    private Long categoryItemId;
+    @NotNull
     private BigDecimal pricePerUnit = new BigDecimal("0.00");
 
     public Long getId() {
@@ -33,5 +35,13 @@ public class AccountIDetailsCommand {
 
     public void setPricePerUnit(BigDecimal pricePerUnit) {
         this.pricePerUnit = pricePerUnit;
+    }
+
+    public Long getCategoryItemId() {
+        return categoryItemId;
+    }
+
+    public void setCategoryItemId(Long categoryItemId) {
+        this.categoryItemId = categoryItemId;
     }
 }

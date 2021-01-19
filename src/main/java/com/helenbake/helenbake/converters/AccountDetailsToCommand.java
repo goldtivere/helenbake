@@ -15,6 +15,7 @@ public class AccountDetailsToCommand implements Converter<AccountDetails,Account
         final AccountIDetailsCommand accountIDetailsCommand= new AccountIDetailsCommand();
 
         accountIDetailsCommand.setId(source.getId());
+        accountIDetailsCommand.setCategoryItemId(source.getCategoryItem().getId());
         accountIDetailsCommand.setName(source.getCategoryItem().getName());
         accountIDetailsCommand.setPricePerUnit(source.getPricePerUnit());
 
