@@ -2,6 +2,12 @@ package com.helenbake.helenbake.util;
 
 
 
+import org.apache.commons.compress.utils.IOUtils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -106,5 +112,13 @@ public class GenericUtil {
     public static String getUniqueID()
     {
         return LocalDateTime.now().toString();
+    }
+    public static byte[] pathToByteArray(String path) throws IOException {
+        File file = Paths.get(path).toFile();
+        return IOUtils.toByteArray(new FileInputStream(file));
+    }
+
+    public static byte[] pathToByteArrayFileInputStream(FileInputStream path) throws IOException {
+        return IOUtils.toByteArray(path);
     }
 }

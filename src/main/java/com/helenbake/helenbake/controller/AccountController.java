@@ -18,8 +18,11 @@ import com.helenbake.helenbake.repo.predicate.CustomPredicateBuilder;
 import com.helenbake.helenbake.repo.predicate.Operation;
 import com.helenbake.helenbake.security.ProfileDetails;
 import com.helenbake.helenbake.services.AccountService;
+import com.helenbake.helenbake.util.GenericUtil;
 import com.helenbake.helenbake.util.JsonConverter;
 import com.helenbake.helenbake.util.PageUtil;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -34,6 +37,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
 import javax.validation.Valid;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -335,4 +342,15 @@ public class AccountController {
         transactionStatus.setMessage("Account Item Edited!");
         return ResponseEntity.ok(transactionStatus);
     }
+    @GetMapping("download")
+    public @ResponseBody
+    byte[] downloadUploadFile() {
+      try{
+                return GenericUtil.pathToByteArrayFileInputStream(accountService.getCategoryItems());
+
+        } catch (IOException ex) {
+            return new byte[0];
+        }
+    }
+
 }

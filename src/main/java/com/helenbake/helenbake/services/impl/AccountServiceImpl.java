@@ -11,13 +11,21 @@ import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.dto.AccountDto;
 import com.helenbake.helenbake.repo.AccountDetailsRepository;
 import com.helenbake.helenbake.repo.AccountRepository;
+import com.helenbake.helenbake.repo.CategoryItemRepository;
 import com.helenbake.helenbake.services.AccountService;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -26,14 +34,17 @@ public class AccountServiceImpl implements AccountService {
     private AccountToCommand accountToCommand;
     private AccountDetailsRepository accountDetailsRepository;
     private AccountDetailsToCommand accountDetailsToCommand;
+    private CategoryItemRepository categoryItemRepository;
 
     public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand,
                               AccountDetailsRepository accountDetailsRepository,
-                              AccountDetailsToCommand accountDetailsToCommand) {
+                              AccountDetailsToCommand accountDetailsToCommand,
+                              CategoryItemRepository categoryItemRepository) {
         this.accountRepository = accountRepository;
         this.accountToCommand = accountToCommand;
         this.accountDetailsRepository = accountDetailsRepository;
         this.accountDetailsToCommand = accountDetailsToCommand;
+        this.categoryItemRepository = categoryItemRepository;
     }
 
     @Override
@@ -143,4 +154,55 @@ public class AccountServiceImpl implements AccountService {
         previous.setDateupdated(LocalDate.now());
         return accountDetailsRepository.saveAndFlush(previous);
     }
+
+    @Override
+    public FileInputStream getCategoryItems() throws IOException {
+        return createExcelForCategoryItems();
+    }
+
+    private FileInputStream createExcelForCategoryItems() throws IOException {
+        List<CategoryItem> categoryItemList=categoryItemRepository.findAll();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("items");
+
+
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 14);
+
+        CellStyle headerCellStyle = workbook.createCellStyle();
+        headerCellStyle.setFont(headerFont);
+        String columns[]= {"Id","Item Name","Amount Per Unit"};
+
+        // Create a Row
+        Row headerRow = sheet.createRow(0);
+        for(int i = 0; i < columns.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(columns[i]);
+            cell.setCellStyle(headerCellStyle);
+        }
+        int rowNum = 1;
+        for(CategoryItem categoryItem: categoryItemList) {
+            Row row = sheet.createRow(rowNum++);
+
+            row.createCell(0)
+                    .setCellValue(categoryItem.getId());
+            row.createCell(1)
+                    .setCellValue(categoryItem.getName());
+        }
+        for(int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        FileOutputStream out = new FileOutputStream(
+                new File("item.xlsx"));
+        //FileOutputStream fileOut = new FileOutputStream("poi-generated-file.xlsx");
+        workbook.write(out);
+        out.close();
+
+        // Closing the workbook
+        workbook.close();
+        return new FileInputStream(new File("item.xlsx"));
+    }
+
 }
