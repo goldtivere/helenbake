@@ -14,18 +14,23 @@ import com.helenbake.helenbake.repo.AccountRepository;
 import com.helenbake.helenbake.repo.CategoryItemRepository;
 import com.helenbake.helenbake.services.AccountService;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.sun.media.sound.InvalidDataException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -205,4 +210,39 @@ public class AccountServiceImpl implements AccountService {
         return new FileInputStream(new File("item.xlsx"));
     }
 
+    @Override
+    public List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException {
+
+        XSSFWorkbook workbook = new XSSFWorkbook(files.getInputStream());
+        XSSFSheet sheet = workbook.getSheetAt(0);
+        Iterator<Row> rowIterator = sheet.iterator();
+        Row row;
+        DataFormatter formatter = new DataFormatter();
+        List<AccountDetails> accountDetails= new ArrayList<>();
+        while (rowIterator.hasNext()) {
+            AccountDetails accountDetails1= new AccountDetails();
+            row = rowIterator.next();
+            if (row.getRowNum() < 1) {
+                continue;
+            }
+            Optional<CategoryItem> categoryItem=categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim()));
+            if(!categoryItem.isPresent())
+            {
+               return null;
+            }
+            Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
+            if(accountDetais.isPresent())
+            {
+                return null;
+            }
+            accountDetails1.setCategoryItem(categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim())).get() );
+
+            accountDetails1.setPricePerUnit(new BigDecimal(formatter.formatCellValue(row.getCell(2) )));
+            accountDetails1.setCreatedBy(createdBy);
+            accountDetails.add(accountDetails1);
+        }
+
+        List<AccountDetails> accountDetailsList= accountDetailsRepository.saveAll(accountDetails);
+        return accountDetailsList;
+    }
 }

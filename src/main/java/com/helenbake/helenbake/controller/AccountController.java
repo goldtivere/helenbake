@@ -21,6 +21,7 @@ import com.helenbake.helenbake.services.AccountService;
 import com.helenbake.helenbake.util.GenericUtil;
 import com.helenbake.helenbake.util.JsonConverter;
 import com.helenbake.helenbake.util.PageUtil;
+import com.sun.media.sound.InvalidDataException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.MessagingException;
 import javax.validation.Valid;
@@ -47,7 +49,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -342,6 +346,8 @@ public class AccountController {
         transactionStatus.setMessage("Account Item Edited!");
         return ResponseEntity.ok(transactionStatus);
     }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("download")
     public @ResponseBody
     byte[] downloadUploadFile() {
@@ -353,4 +359,55 @@ public class AccountController {
         }
     }
 
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    @PostMapping("upload")
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile files,@AuthenticationPrincipal ProfileDetails profileDetails) {
+        if (files.isEmpty() || files == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        TransactionStatus transactionStatus = new TransactionStatus();
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        try {
+            List<AccountDetails> dataUpload = accountService.uploadFile(files, user2.getId());
+
+            if(dataUpload == null || dataUpload.isEmpty()){
+                transactionStatus.setStatus(false);
+                transactionStatus.setMessage("Data already exists!!");
+                return ResponseEntity.ok(transactionStatus);
+            }
+
+            logger.info("File Uploaded for Account Item at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(dataUpload));
+
+        } catch (InvalidDataException e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Error in data uploaded. Kindly make sure fields are properly filled!");
+            return  ResponseEntity.ok(transactionStatus);
+
+        }   catch (NumberFormatException e) {
+        e.printStackTrace();
+        logger.error(e.getMessage());
+        transactionStatus.setStatus(false);
+        transactionStatus.setMessage("Please enter valid numbers!");
+        return  ResponseEntity.ok(transactionStatus);
+
+    } catch (IOException e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Error in data uploaded. Kindly contact your Administrator!");
+            return  ResponseEntity.ok(transactionStatus);
+
+        }
+        transactionStatus.setStatus(true);
+        transactionStatus.setMessage("Upload Successful");
+        return  ResponseEntity.ok(transactionStatus);
+    }
 }

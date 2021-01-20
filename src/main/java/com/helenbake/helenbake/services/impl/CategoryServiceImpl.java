@@ -104,4 +104,5 @@ public class CategoryServiceImpl implements CategoryService {
         categoryItem.setCreatedBy(id);
         return categoryItemToCommand.convert(categoryItemRepository.saveAndFlush(categoryItem));
     }
+
 }
