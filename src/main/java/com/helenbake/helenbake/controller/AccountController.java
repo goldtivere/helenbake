@@ -2,6 +2,7 @@ package com.helenbake.helenbake.controller;
 
 import com.helenbake.helenbake.command.AccountCommand;
 import com.helenbake.helenbake.command.AccountIDetailsCommand;
+import com.helenbake.helenbake.command.CategoryCommand;
 import com.helenbake.helenbake.command.UserCommand;
 import com.helenbake.helenbake.domain.Account;
 import com.helenbake.helenbake.domain.AccountDetails;
@@ -9,6 +10,7 @@ import com.helenbake.helenbake.domain.CategoryItem;
 import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.dto.AccountDet;
 import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.dto.AccountLog;
 import com.helenbake.helenbake.dto.TransactionStatus;
 import com.helenbake.helenbake.repo.AccountDetailsRepository;
 import com.helenbake.helenbake.repo.AccountRepository;
@@ -409,5 +411,61 @@ public class AccountController {
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Upload Successful");
         return  ResponseEntity.ok(transactionStatus);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountName/{id}")
+    public ResponseEntity<AccountCommand> getCategoryName(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(accountService.getAccountName(id));
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PostMapping("createAccountLog/{id}")
+    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id,@RequestParam("accountdto") String accountdtodto,
+                                              @AuthenticationPrincipal ProfileDetails profileDetails) {
+
+//       BatchTenorDto[] tenorDtos = JsonConverter.getElements(tenorDtosStr, BatchTenorDto[].class);
+//        if (bindingResult.hasErrors() || accountDto == null) {
+//            return ResponseEntity.badRequest().build();
+//        }
+//        TransactionStatus transactionStatus = new TransactionStatus();
+//        User user2 = profileDetails.toUser();
+//        if (user2 == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        LocalDate to;
+//        LocalDate from;
+//        try {
+//            to = LocalDate.parse(accountDto.getTo());
+//            from = LocalDate.parse(accountDto.getFrom());
+//            if (from.isAfter(to)) {
+//                transactionStatus.setStatus(false);
+//                transactionStatus.setMessage("From cannot be after To");
+//                return ResponseEntity.ok(transactionStatus);
+//            }
+//        } catch (DateTimeException e) {
+//            e.printStackTrace();
+//            transactionStatus.setStatus(false);
+//            transactionStatus.setMessage("Invalid Date entered:  " + accountDto.getTo() + " " + accountDto.getFrom());
+//            return ResponseEntity.ok(transactionStatus);
+//        }
+//        AccountCommand accountCommand = new AccountCommand();
+//        accountCommand.setTo(to);
+//        accountCommand.setFrom(from);
+//        accountCommand.setDescription(accountDto.getDescription());
+//        accountCommand.setAmount(accountDto.getAmount());
+//
+//        Account account = accountService.createAccount(accountCommand, user2.getId());
+//        if (account == null) {
+//            transactionStatus.setStatus(false);
+//            transactionStatus.setMessage("Date Already Exist:  " + accountDto.getTo() + " " + accountDto.getFrom());
+//            return ResponseEntity.ok(transactionStatus);
+//        }
+//        logger.info("New Account created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
+//        transactionStatus.setStatus(true);
+//        transactionStatus.setMessage("New Account created");
+//        return ResponseEntity.ok(transactionStatus);
+        logger.info("New Account created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountdtodto));
+        return ResponseEntity.ok().build();
     }
 }

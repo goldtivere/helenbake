@@ -2,6 +2,7 @@ package com.helenbake.helenbake.services;
 
 import com.helenbake.helenbake.command.AccountCommand;
 import com.helenbake.helenbake.command.AccountIDetailsCommand;
+import com.helenbake.helenbake.command.CategoryCommand;
 import com.helenbake.helenbake.domain.Account;
 import com.helenbake.helenbake.domain.AccountDetails;
 import com.helenbake.helenbake.domain.CategoryItem;
@@ -26,4 +27,5 @@ public interface AccountService {
     List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException;
     AccountDetails editAccountItems(AccountIDetailsCommand account, CategoryItem categoryItem,AccountDetails previous, Long id);
     FileInputStream getCategoryItems() throws IOException;
+    AccountCommand getAccountName(Long id);
 }

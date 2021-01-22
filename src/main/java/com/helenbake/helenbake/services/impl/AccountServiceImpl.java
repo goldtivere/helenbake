@@ -245,4 +245,9 @@ public class AccountServiceImpl implements AccountService {
         List<AccountDetails> accountDetailsList= accountDetailsRepository.saveAll(accountDetails);
         return accountDetailsList;
     }
+
+    @Override
+    public AccountCommand getAccountName(Long id) {
+        return accountToCommand.convert(accountRepository.findById(id).orElse(null));
+    }
 }
