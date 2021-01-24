@@ -15,6 +15,7 @@ public class UserCommand {
     private String phoneNumber;
     @NotNull
     private RoleType roleType;
+    private Boolean userStatus= Boolean.FALSE;
 
     public Long getId() {
         return id;
@@ -54,5 +55,13 @@ public class UserCommand {
 
     public void setRoleType(RoleType roleType) {
         this.roleType = roleType;
+    }
+
+    public Boolean getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(Boolean userStatus) {
+        this.userStatus = userStatus;
     }
 }

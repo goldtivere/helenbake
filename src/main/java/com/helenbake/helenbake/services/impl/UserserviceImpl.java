@@ -7,12 +7,14 @@ import com.helenbake.helenbake.command.UserCommand;
 import com.helenbake.helenbake.converters.UserToCommand;
 import com.helenbake.helenbake.domain.Category;
 import com.helenbake.helenbake.domain.User;
+import com.helenbake.helenbake.domain.enums.GenericStatus;
 import com.helenbake.helenbake.repo.RoleRepository;
 import com.helenbake.helenbake.repo.UserRepository;
 import com.helenbake.helenbake.services.UserService;
 import com.helenbake.helenbake.util.GenericUtil;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,6 +32,8 @@ public class UserserviceImpl implements UserService {
     private RoleRepository roleRepository;
     private UserToCommand userToCommand;
     private BCryptPasswordEncoder encoder;
+    @Value("${app.defaultPasscode}")
+    private String defaultCode;
 
     public UserserviceImpl(UserRepository userRepository,RoleRepository roleRepository,UserToCommand userToCommand,
                            BCryptPasswordEncoder encoder) {
@@ -57,11 +61,11 @@ public class UserserviceImpl implements UserService {
 
     @Override
     public UserCommand createUser(UserCommand userCommand, Long id) {
-        String passcode = GenericUtil.generateRandomDigits(5);
         User user = new User();
         user.setFirstName(userCommand.getFirstName());
-        user.setPassword(encoder.encode(passcode));
-        user.setPasscode(passcode);
+        user.setPassword(encoder.encode(defaultCode));
+        user.setPasscode(defaultCode);
+        user.setStatus(GenericStatus.ACTIVE);
         user.setLastName(userCommand.getLastName());
         user.setPhoneNumber(userCommand.getPhoneNumber());
         user.setRole(roleRepository.findByName(userCommand.getRoleType()).get());
@@ -87,4 +91,18 @@ public class UserserviceImpl implements UserService {
         return UserCommand;
     }
 
+    @Override
+    public User enableDisableUsers(User user, User user2) {
+        if(user.getStatus().equals(GenericStatus.ACTIVE))
+        {
+            user.setStatus(GenericStatus.DEACTIVATED);
+            user.setUpdatedBy(user2.getId());
+            user.setDateupdated(LocalDate.now());
+        } else if(user.getStatus().equals(GenericStatus.DEACTIVATED)) {
+            user.setStatus(GenericStatus.ACTIVE);
+            user.setUpdatedBy(user2.getId());
+            user.setDateupdated(LocalDate.now());
+        }
+        return userRepository.saveAndFlush(user);
+    }
 }

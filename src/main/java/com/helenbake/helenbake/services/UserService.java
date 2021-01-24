@@ -14,4 +14,5 @@ public interface UserService {
     UserCommand createUser(UserCommand userCommand, Long id);
     UserCommand editUser(User previous, UserCommand usercurrent, User inputer);
     Page<UserCommand> listAllUsers(BooleanExpression expression, Pageable pageable);
+    User enableDisableUsers(User user,User user1);
 }

@@ -27,6 +27,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -135,4 +136,28 @@ public class UserController {
                 .with("phoneNumber", Operation.LIKE, phoneNumber);
         return builder;
     }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PutMapping("setStatus/{id}")
+    public ResponseEntity<UserCommand> setUserStatus(@PathVariable("id") Long id,
+                                                            @AuthenticationPrincipal ProfileDetails profileDetails) throws MessagingException {
+
+
+
+        Optional<User> user = userRepository.findById(id);
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!user.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        User user1 = userService.enableDisableUsers(user.get(), user2);
+        logger.info(" User status updated  at  " + LocalDateTime.now() + " from " + JsonConverter.getJsonRecursive(user.get()) + "  to  " + JsonConverter.getJsonRecursive(user1));
+        return ResponseEntity.ok().build();
+    }
+
 }
