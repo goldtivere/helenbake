@@ -4,14 +4,10 @@ import com.helenbake.helenbake.command.AccountCommand;
 import com.helenbake.helenbake.command.AccountIDetailsCommand;
 import com.helenbake.helenbake.converters.AccountDetailsToCommand;
 import com.helenbake.helenbake.converters.AccountToCommand;
-import com.helenbake.helenbake.domain.Account;
-import com.helenbake.helenbake.domain.AccountDetails;
-import com.helenbake.helenbake.domain.CategoryItem;
-import com.helenbake.helenbake.domain.User;
+import com.helenbake.helenbake.domain.*;
+import com.helenbake.helenbake.domain.Collections;
 import com.helenbake.helenbake.dto.AccountDto;
-import com.helenbake.helenbake.repo.AccountDetailsRepository;
-import com.helenbake.helenbake.repo.AccountRepository;
-import com.helenbake.helenbake.repo.CategoryItemRepository;
+import com.helenbake.helenbake.repo.*;
 import com.helenbake.helenbake.services.AccountService;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.sun.media.sound.InvalidDataException;
@@ -22,8 +18,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -40,16 +39,22 @@ public class AccountServiceImpl implements AccountService {
     private AccountDetailsRepository accountDetailsRepository;
     private AccountDetailsToCommand accountDetailsToCommand;
     private CategoryItemRepository categoryItemRepository;
+    private CollectionRepository collectionRepository;
+    private AccountLogRepository accountLogRepository;
 
     public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand,
                               AccountDetailsRepository accountDetailsRepository,
                               AccountDetailsToCommand accountDetailsToCommand,
+                              CollectionRepository collectionRepository,
+                              AccountLogRepository accountLogRepository,
                               CategoryItemRepository categoryItemRepository) {
         this.accountRepository = accountRepository;
         this.accountToCommand = accountToCommand;
         this.accountDetailsRepository = accountDetailsRepository;
         this.accountDetailsToCommand = accountDetailsToCommand;
         this.categoryItemRepository = categoryItemRepository;
+        this.collectionRepository = collectionRepository;
+        this.accountLogRepository = accountLogRepository;
     }
 
     @Override
@@ -249,5 +254,64 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountCommand getAccountName(Long id) {
         return accountToCommand.convert(accountRepository.findById(id).orElse(null));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog, Long createdBy,Account account) {
+        Collections collections= saveCollections(accountLog,account,createdBy);
+        return saveAccountLog(collections,accountLog,createdBy);
+
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,Long createdBy)
+    {
+        Collections collections= new Collections();
+        BigDecimal totalVal= new BigDecimal("0.00");
+
+        for(com.helenbake.helenbake.dto.AccountLog accountLog1: accountLog)
+        {
+            Optional<CategoryItem> categoryItemOption= categoryItemRepository.findById(accountLog1.getCategoryItemId());
+            Optional<AccountDetails> accountDetails= accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
+            totalVal= totalVal.add(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog1.getUnit())));
+        }
+       Optional<Collections> collections1= collectionRepository.findTopByOrderByIdDesc();
+        if(collections1.isPresent())
+        {
+            collections.setReceiptNumber("HB0"+collections1.get().getId());
+        }
+        else
+        {
+            collections.setReceiptNumber("HB0"+1);
+        }
+        collections.setAccount(account);
+        collections.setTotal(totalVal);
+        collections.setCreatedBy(createdBy);
+        return collectionRepository.saveAndFlush(collections);
+    }
+
+    private AccountLog saveAccountLog(Collections collections, com.helenbake.helenbake.dto.AccountLog[] accountLogs, Long createdBy)
+    {
+        AccountLog accountLogss = new AccountLog();
+        for(com.helenbake.helenbake.dto.AccountLog accountLog: accountLogs)
+        {
+            AccountLog accountLog1= new AccountLog();
+            Optional<CategoryItem> categoryItemOption= categoryItemRepository.findById(accountLog.getCategoryItemId());
+           Optional<AccountDetails> accountDetails= accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
+           accountLog1.setQuantity(accountLog.getUnit());
+           accountLog1.setCategoryItem(categoryItemOption.get());
+           accountLog1.setAmountPerItem(accountDetails.get().getPricePerUnit());
+           accountLog1.setTotalAmount(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog.getUnit())));
+           accountLog1.setCollections(collections);
+           accountLog1.setCreatedBy(createdBy);
+
+          accountLogss= accountLogRepository.saveAndFlush(accountLog1);
+
+
+
+        }
+        return accountLogss;
+
     }
 }

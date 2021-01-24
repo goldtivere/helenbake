@@ -8,6 +8,7 @@ import com.helenbake.helenbake.domain.AccountDetails;
 import com.helenbake.helenbake.domain.CategoryItem;
 import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.dto.AccountLog;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,5 @@ public interface AccountService {
     AccountDetails editAccountItems(AccountIDetailsCommand account, CategoryItem categoryItem,AccountDetails previous, Long id);
     FileInputStream getCategoryItems() throws IOException;
     AccountCommand getAccountName(Long id);
+    com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog, Long createdBy,Account account);
 }

@@ -249,6 +249,7 @@ public class AccountController {
         Page<AccountIDetailsCommand> accountIDetailsCommands = accountService.listAllAccountItems(builder.build(), pageRequest);
         return ResponseEntity.ok(accountIDetailsCommands);
     }
+
     private CustomPredicateBuilder getAccountItemBuilder(String name, BigDecimal pricePerUnit) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountDetails", AccountDetails.class)
                 .with("categoryItem.name", Operation.LIKE, name)
@@ -274,15 +275,13 @@ public class AccountController {
         Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
 
 
-        if(!categoryItem.isPresent())
-        {
+        if (!categoryItem.isPresent()) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Item does not exist!");
             return ResponseEntity.ok(transactionStatus);
         }
-        Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
-        if(accountDetais.isPresent())
-        {
+        Optional<AccountDetails> accountDetais = accountDetailsRepository.findByCategoryItem(categoryItem.get());
+        if (accountDetais.isPresent()) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Item Already Exists!");
             return ResponseEntity.ok(transactionStatus);
@@ -298,10 +297,11 @@ public class AccountController {
         transactionStatus.setMessage("New Account Item created");
         return ResponseEntity.ok(transactionStatus);
     }
+
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("editAccountItem")
     public ResponseEntity<?> editAccountItem(@RequestBody @Valid AccountIDetailsCommand accountDto, BindingResult bindingResult,
-                                         @AuthenticationPrincipal ProfileDetails profileDetails) {
+                                             @AuthenticationPrincipal ProfileDetails profileDetails) {
 
         if (bindingResult.hasErrors() || accountDto == null) {
             return ResponseEntity.badRequest().build();
@@ -315,8 +315,7 @@ public class AccountController {
         Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
 
 
-        if(!categoryItem.isPresent())
-        {
+        if (!categoryItem.isPresent()) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Account Item Does not Exist!!");
             return ResponseEntity.ok(transactionStatus);
@@ -327,21 +326,19 @@ public class AccountController {
             transactionStatus.setMessage("Account Item Does not Exist!!");
             return ResponseEntity.ok(transactionStatus);
         }
-        Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
-        if(accountDetais.isPresent() && (accountDetais.get().getId() != doesExist.get().getId()))
-        {
+        Optional<AccountDetails> accountDetais = accountDetailsRepository.findByCategoryItem(categoryItem.get());
+        if (accountDetais.isPresent() && (accountDetais.get().getId() != doesExist.get().getId())) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Category Item Already Exists!!");
             return ResponseEntity.ok(transactionStatus);
         }
-        if(!accountDetais.isPresent())
-        {
+        if (!accountDetais.isPresent()) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Category Item does not exist for this Account Item!!");
             return ResponseEntity.ok(transactionStatus);
         }
 
-        AccountDetails account = accountService.editAccountItems(accountDto, categoryItem.get(),doesExist.get(), user2.getId());
+        AccountDetails account = accountService.editAccountItems(accountDto, categoryItem.get(), doesExist.get(), user2.getId());
 
         logger.info("Account Item Edited at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
         transactionStatus.setStatus(true);
@@ -353,8 +350,8 @@ public class AccountController {
     @GetMapping("download")
     public @ResponseBody
     byte[] downloadUploadFile() {
-      try{
-                return GenericUtil.pathToByteArrayFileInputStream(accountService.getCategoryItems());
+        try {
+            return GenericUtil.pathToByteArrayFileInputStream(accountService.getCategoryItems());
 
         } catch (IOException ex) {
             return new byte[0];
@@ -364,7 +361,7 @@ public class AccountController {
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     @PostMapping("upload")
-    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile files,@AuthenticationPrincipal ProfileDetails profileDetails) {
+    public ResponseEntity<?> upload(@RequestParam("file") MultipartFile files, @AuthenticationPrincipal ProfileDetails profileDetails) {
         if (files.isEmpty() || files == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -378,7 +375,7 @@ public class AccountController {
         try {
             List<AccountDetails> dataUpload = accountService.uploadFile(files, user2.getId());
 
-            if(dataUpload == null || dataUpload.isEmpty()){
+            if (dataUpload == null || dataUpload.isEmpty()) {
                 transactionStatus.setStatus(false);
                 transactionStatus.setMessage("Data already exists!!");
                 return ResponseEntity.ok(transactionStatus);
@@ -391,26 +388,26 @@ public class AccountController {
             logger.error(e.getMessage());
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Error in data uploaded. Kindly make sure fields are properly filled!");
-            return  ResponseEntity.ok(transactionStatus);
+            return ResponseEntity.ok(transactionStatus);
 
-        }   catch (NumberFormatException e) {
-        e.printStackTrace();
-        logger.error(e.getMessage());
-        transactionStatus.setStatus(false);
-        transactionStatus.setMessage("Please enter valid numbers!");
-        return  ResponseEntity.ok(transactionStatus);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Please enter valid numbers!");
+            return ResponseEntity.ok(transactionStatus);
 
-    } catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             logger.error(e.getMessage());
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Error in data uploaded. Kindly contact your Administrator!");
-            return  ResponseEntity.ok(transactionStatus);
+            return ResponseEntity.ok(transactionStatus);
 
         }
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Upload Successful");
-        return  ResponseEntity.ok(transactionStatus);
+        return ResponseEntity.ok(transactionStatus);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -421,51 +418,52 @@ public class AccountController {
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("createAccountLog/{id}")
-    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id,@RequestParam("accountdto") String accountdtodto,
+    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {
 
-//       BatchTenorDto[] tenorDtos = JsonConverter.getElements(tenorDtosStr, BatchTenorDto[].class);
-//        if (bindingResult.hasErrors() || accountDto == null) {
-//            return ResponseEntity.badRequest().build();
-//        }
-//        TransactionStatus transactionStatus = new TransactionStatus();
-//        User user2 = profileDetails.toUser();
-//        if (user2 == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//        LocalDate to;
-//        LocalDate from;
-//        try {
-//            to = LocalDate.parse(accountDto.getTo());
-//            from = LocalDate.parse(accountDto.getFrom());
-//            if (from.isAfter(to)) {
-//                transactionStatus.setStatus(false);
-//                transactionStatus.setMessage("From cannot be after To");
-//                return ResponseEntity.ok(transactionStatus);
-//            }
-//        } catch (DateTimeException e) {
-//            e.printStackTrace();
-//            transactionStatus.setStatus(false);
-//            transactionStatus.setMessage("Invalid Date entered:  " + accountDto.getTo() + " " + accountDto.getFrom());
-//            return ResponseEntity.ok(transactionStatus);
-//        }
-//        AccountCommand accountCommand = new AccountCommand();
-//        accountCommand.setTo(to);
-//        accountCommand.setFrom(from);
-//        accountCommand.setDescription(accountDto.getDescription());
-//        accountCommand.setAmount(accountDto.getAmount());
-//
-//        Account account = accountService.createAccount(accountCommand, user2.getId());
-//        if (account == null) {
-//            transactionStatus.setStatus(false);
-//            transactionStatus.setMessage("Date Already Exist:  " + accountDto.getTo() + " " + accountDto.getFrom());
-//            return ResponseEntity.ok(transactionStatus);
-//        }
-//        logger.info("New Account created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
-//        transactionStatus.setStatus(true);
-//        transactionStatus.setMessage("New Account created");
-//        return ResponseEntity.ok(transactionStatus);
-        logger.info("New Account created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountdtodto));
-        return ResponseEntity.ok().build();
+
+        if (accountdto.isEmpty() || accountdto == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        TransactionStatus transactionStatus = new TransactionStatus();
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Optional<Account> account = accountRepository.findById(id);
+        if (!account.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        AccountLog[] accountLogs = JsonConverter.getElements(accountdto, AccountLog[].class);
+        for (AccountLog accountLo : accountLogs) {
+            try {
+                Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountLo.getCategoryItemId());
+                if (!categoryItem.isPresent()) {
+                    transactionStatus.setStatus(false);
+                    transactionStatus.setMessage("Category Item not found!");
+                    return ResponseEntity.ok(transactionStatus);
+                }
+            } catch (Exception e) {
+                transactionStatus.setStatus(false);
+                transactionStatus.setMessage("Something went wrong, Please contact the administrator!!");
+                logger.error("Something went wrong at  " + LocalDateTime.now() + " " + e.toString());
+                return ResponseEntity.ok(transactionStatus);
+            }
+        }
+        com.helenbake.helenbake.domain.AccountLog accountLog = new com.helenbake.helenbake.domain.AccountLog();
+        try {
+             accountLog =
+                    accountService.createAccountLog(accountLogs, user2.getId(), account.get());
+        } catch (Exception e) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Something went wrong, Please contact the administrator!!");
+            logger.error("Something went wrong at  " + LocalDateTime.now() + " " + e.toString());
+            return ResponseEntity.ok(transactionStatus);
+        }
+        transactionStatus.setStatus(true);
+        transactionStatus.setMessage("Saved Successful");
+        logger.info("New AccountLog created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountLog));
+        return ResponseEntity.ok(transactionStatus);
+
     }
 }
