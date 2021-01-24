@@ -279,7 +279,7 @@ public class AccountServiceImpl implements AccountService {
        Optional<Collections> collections1= collectionRepository.findTopByOrderByIdDesc();
         if(collections1.isPresent())
         {
-            collections.setReceiptNumber("HB0"+collections1.get().getId());
+            collections.setReceiptNumber("HB0"+(collections1.get().getId()+1L));
         }
         else
         {
