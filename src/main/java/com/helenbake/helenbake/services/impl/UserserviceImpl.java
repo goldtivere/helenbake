@@ -8,6 +8,7 @@ import com.helenbake.helenbake.converters.UserToCommand;
 import com.helenbake.helenbake.domain.Category;
 import com.helenbake.helenbake.domain.User;
 import com.helenbake.helenbake.domain.enums.GenericStatus;
+import com.helenbake.helenbake.dto.ChangePassword;
 import com.helenbake.helenbake.repo.RoleRepository;
 import com.helenbake.helenbake.repo.UserRepository;
 import com.helenbake.helenbake.services.UserService;
@@ -104,5 +105,21 @@ public class UserserviceImpl implements UserService {
             user.setDateupdated(LocalDate.now());
         }
         return userRepository.saveAndFlush(user);
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public UserCommand changePassword(User user, ChangePassword passwordDto) {
+        user.setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
+        user.setDateupdated(LocalDate.now());
+        user.setUpdatedBy(user.getId());
+        return userToCommand.convert(userRepository.saveAndFlush(user));
+    }
+
+    @Override
+    public UserCommand resetPassword(User user, Long updatedBy) {
+        user.setPassword(encoder.encode(defaultCode));
+        user.setDateupdated(LocalDate.now());
+        user.setUpdatedBy(updatedBy);
+        return userToCommand.convert(userRepository.saveAndFlush(user));
     }
 }

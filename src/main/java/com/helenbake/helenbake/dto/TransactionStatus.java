@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 
 public class TransactionStatus {
     private Boolean status;
-    private Long walletId;
+    private String add;
     private String message;
-    private BigDecimal availableBalance;
+    private String methid;
 
     public Boolean getStatus() {
         return status;
@@ -17,14 +17,6 @@ public class TransactionStatus {
     }
 
 
-    public Long getWalletId() {
-        return walletId;
-    }
-
-    public void setWalletId(Long walletId) {
-        this.walletId = walletId;
-    }
-
     public String getMessage() {
         return message;
     }
@@ -33,11 +25,19 @@ public class TransactionStatus {
         this.message = message;
     }
 
-    public BigDecimal getAvailableBalance() {
-        return availableBalance;
+    public String getAdd() {
+        return add;
     }
 
-    public void setAvailableBalance(BigDecimal availableBalance) {
-        this.availableBalance = availableBalance;
+    public void setAdd(String add) {
+        this.add = add;
+    }
+
+    public String getMethid() {
+        return methid;
+    }
+
+    public void setMethid(String methid) {
+        this.methid = methid;
     }
 }

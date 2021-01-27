@@ -1,9 +1,8 @@
 package com.helenbake.helenbake.domain;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
@@ -19,7 +18,13 @@ public class AccountLog extends BaseEntity {
     private Collections collections;
 
     private Long quantity;
+    @JsonIgnore
+    @Transient
+    private String refCode;
 
+    @JsonIgnore
+    @Transient
+    private String payMethod;
     private BigDecimal amountPerItem= new BigDecimal("0.00");
 
     private BigDecimal totalAmount= new BigDecimal("0.00");
@@ -62,5 +67,21 @@ public class AccountLog extends BaseEntity {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public String getRefCode() {
+        return refCode;
+    }
+
+    public void setRefCode(String refCode) {
+        this.refCode = refCode;
+    }
+
+    public String getPayMethod() {
+        return payMethod;
+    }
+
+    public void setPayMethod(String payMethod) {
+        this.payMethod = payMethod;
     }
 }

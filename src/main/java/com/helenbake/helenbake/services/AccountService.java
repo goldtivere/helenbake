@@ -29,5 +29,5 @@ public interface AccountService {
     AccountDetails editAccountItems(AccountIDetailsCommand account, CategoryItem categoryItem,AccountDetails previous, Long id);
     FileInputStream getCategoryItems() throws IOException;
     AccountCommand getAccountName(Long id);
-    com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog, Long createdBy,Account account);
+    com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType, Long createdBy,Account account);
 }

@@ -258,14 +258,18 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog, Long createdBy,Account account) {
-        Collections collections= saveCollections(accountLog,account,createdBy);
-        return saveAccountLog(collections,accountLog,createdBy);
+    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog,String paymentType, Long createdBy,Account account) {
+        Collections collections= saveCollections(accountLog,account,paymentType,createdBy);
+        AccountLog accountLog1= saveAccountLog(collections,accountLog,createdBy);
+        accountLog1.setRefCode(collections.getReceiptNumber());
+        accountLog1.setPayMethod(collections.getPaymentType());
+
+        return accountLog1;
 
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,Long createdBy)
+    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,String paymentType,Long createdBy)
     {
         Collections collections= new Collections();
         BigDecimal totalVal= new BigDecimal("0.00");
@@ -288,6 +292,7 @@ public class AccountServiceImpl implements AccountService {
         collections.setAccount(account);
         collections.setTotal(totalVal);
         collections.setCreatedBy(createdBy);
+        collections.setPaymentType(paymentType);
         return collectionRepository.saveAndFlush(collections);
     }
 

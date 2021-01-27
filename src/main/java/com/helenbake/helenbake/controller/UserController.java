@@ -4,6 +4,7 @@ import com.helenbake.helenbake.command.CategoryCommand;
 import com.helenbake.helenbake.command.UserCommand;
 import com.helenbake.helenbake.domain.Category;
 import com.helenbake.helenbake.domain.User;
+import com.helenbake.helenbake.dto.ChangePassword;
 import com.helenbake.helenbake.repo.RoleRepository;
 import com.helenbake.helenbake.repo.UserRepository;
 import com.helenbake.helenbake.repo.predicate.CustomPredicateBuilder;
@@ -157,6 +158,51 @@ public class UserController {
 
         User user1 = userService.enableDisableUsers(user.get(), user2);
         logger.info(" User status updated  at  " + LocalDateTime.now() + " from " + JsonConverter.getJsonRecursive(user.get()) + "  to  " + JsonConverter.getJsonRecursive(user1));
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password")
+    public ResponseEntity<UserCommand> changePassword(@RequestBody @Valid ChangePassword passwordDto, BindingResult bindingResult,
+                                                      @AuthenticationPrincipal ProfileDetails profileDetails) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().build();
+        } else {
+            User user = profileDetails.toUser();
+            if (user == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            UserCommand userCommand = new UserCommand();
+            System.out.println(passwordDto.getPreviousPassword());
+            if (passwordEncoder.matches(passwordDto.getPreviousPassword(), user.getPassword())) {
+                userCommand = userService.changePassword(user, passwordDto);
+                logger.info("Password Changed created at: " + LocalDateTime.now() + "  ===>" + JsonConverter.getJsonRecursive(userCommand));
+                return ResponseEntity.ok(userCommand);
+
+            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PutMapping("/password/reset/{id}")
+    public ResponseEntity<UserCommand> resetPassword(@PathVariable("id") Long id,
+                                                     @AuthenticationPrincipal ProfileDetails profileDetails) throws MessagingException {
+
+
+
+        Optional<User> user = userRepository.findById(id);
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (!user.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        UserCommand user1 = userService.resetPassword(user.get(), user2.getId());
+        logger.info(" User password reset  at  " + LocalDateTime.now() + " from " + JsonConverter.getJsonRecursive(user.get()) + "  to  " + JsonConverter.getJsonRecursive(user1));
         return ResponseEntity.ok().build();
     }
 

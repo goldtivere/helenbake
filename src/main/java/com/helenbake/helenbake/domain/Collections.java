@@ -15,6 +15,7 @@ public class Collections extends BaseEntity {
     private Account account;
 
     private BigDecimal total= new BigDecimal("0.00");
+    private String paymentType;
 
     private String receiptNumber;
 
@@ -40,5 +41,13 @@ public class Collections extends BaseEntity {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
     }
 }

@@ -417,12 +417,12 @@ public class AccountController {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @PostMapping("createAccountLog/{id}")
-    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @RequestParam("accountdto") String accountdto,
+    @PostMapping("createAccountLog/{id}/{paymentType}")
+    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType,@RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {
 
 
-        if (accountdto.isEmpty() || accountdto == null) {
+        if (accountdto.isEmpty() || accountdto == null || id==0L || paymentType.isEmpty() || paymentType==null) {
             return ResponseEntity.badRequest().build();
         }
         TransactionStatus transactionStatus = new TransactionStatus();
@@ -453,7 +453,7 @@ public class AccountController {
         com.helenbake.helenbake.domain.AccountLog accountLog = new com.helenbake.helenbake.domain.AccountLog();
         try {
              accountLog =
-                    accountService.createAccountLog(accountLogs, user2.getId(), account.get());
+                    accountService.createAccountLog(accountLogs, paymentType,user2.getId(), account.get());
         } catch (Exception e) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Something went wrong, Please contact the administrator!!");
@@ -462,6 +462,8 @@ public class AccountController {
         }
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Saved Successful");
+        transactionStatus.setAdd(accountLog.getRefCode());
+        transactionStatus.setMethid(accountLog.getPayMethod());
         logger.info("New AccountLog created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountLog));
         return ResponseEntity.ok(transactionStatus);
 
