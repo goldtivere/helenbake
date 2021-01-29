@@ -1,21 +1,10 @@
 package com.helenbake.helenbake.controller;
 
-import com.helenbake.helenbake.command.AccountCommand;
-import com.helenbake.helenbake.command.AccountIDetailsCommand;
-import com.helenbake.helenbake.command.CategoryCommand;
-import com.helenbake.helenbake.command.UserCommand;
-import com.helenbake.helenbake.domain.Account;
-import com.helenbake.helenbake.domain.AccountDetails;
-import com.helenbake.helenbake.domain.CategoryItem;
-import com.helenbake.helenbake.domain.User;
-import com.helenbake.helenbake.dto.AccountDet;
-import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.command.*;
+import com.helenbake.helenbake.domain.*;
+import com.helenbake.helenbake.dto.*;
 import com.helenbake.helenbake.dto.AccountLog;
-import com.helenbake.helenbake.dto.TransactionStatus;
-import com.helenbake.helenbake.repo.AccountDetailsRepository;
-import com.helenbake.helenbake.repo.AccountRepository;
-import com.helenbake.helenbake.repo.CategoryItemRepository;
-import com.helenbake.helenbake.repo.UserRepository;
+import com.helenbake.helenbake.repo.*;
 import com.helenbake.helenbake.repo.predicate.CustomPredicateBuilder;
 import com.helenbake.helenbake.repo.predicate.Operation;
 import com.helenbake.helenbake.security.ProfileDetails;
@@ -65,16 +54,19 @@ public class AccountController {
     private UserRepository userRepository;
     private AccountDetailsRepository accountDetailsRepository;
     private CategoryItemRepository categoryItemRepository;
+    private AccountItemQuantityRepository accountItemQuantityRepository;
     Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     public AccountController(AccountService accountService, AccountRepository accountRepository,
                              CategoryItemRepository categoryItemRepository,
+                             AccountItemQuantityRepository accountItemQuantityRepository,
                              UserRepository userRepository, AccountDetailsRepository accountDetailsRepository) {
         this.accountService = accountService;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.categoryItemRepository = categoryItemRepository;
+        this.accountItemQuantityRepository = accountItemQuantityRepository;
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -250,10 +242,40 @@ public class AccountController {
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountItemQuantity/{id}")
+    public ResponseEntity<Page<AccountDetailQuantityCommand>> listAccountQuantity(@PathVariable("id") Long id,
+                                                                                  @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                                  @RequestParam(value = "name", required = false) String name,
+                                                                                  @RequestParam(value = "quantity", required = false) Long quantity) {
+
+        Optional<Account> accountOptional = accountRepository.findById(id);
+
+        if (!accountOptional.isPresent()) {
+
+            return ResponseEntity.notFound().build();
+        }
+        CustomPredicateBuilder builder = getAccountItemQuantityBuilder(name, quantity,id);
+        Pageable pageRequest =
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("categoryItem.name"), Sort.Order.asc("quantity")));
+        Page<AccountDetailQuantityCommand> accountIDetailsCommands = accountService.listAllAccountQuantityItems(builder.build(), pageRequest);
+        return ResponseEntity.ok(accountIDetailsCommands);
+    }
+
+
     private CustomPredicateBuilder getAccountItemBuilder(String name, BigDecimal pricePerUnit) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountDetails", AccountDetails.class)
                 .with("categoryItem.name", Operation.LIKE, name)
                 .with("pricePerUnit", Operation.EQUALS, pricePerUnit);
+        return builder;
+    }
+
+    private CustomPredicateBuilder getAccountItemQuantityBuilder(String name, Long quantity,Long id) {
+        CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountItemQuantity", AccountItemQuantity.class)
+                .with("account.id", Operation.EQUALS, id)
+                .with("categoryItem.name", Operation.LIKE, name)
+                .with("quantity", Operation.EQUALS, quantity);
         return builder;
     }
 
@@ -418,11 +440,11 @@ public class AccountController {
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("createAccountLog/{id}/{paymentType}")
-    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType,@RequestParam("accountdto") String accountdto,
+    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType, @RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {
 
 
-        if (accountdto.isEmpty() || accountdto == null || id==0L || paymentType.isEmpty() || paymentType==null) {
+        if (accountdto.isEmpty() || accountdto == null || id == 0L || paymentType.isEmpty() || paymentType == null) {
             return ResponseEntity.badRequest().build();
         }
         TransactionStatus transactionStatus = new TransactionStatus();
@@ -452,8 +474,8 @@ public class AccountController {
         }
         com.helenbake.helenbake.domain.AccountLog accountLog = new com.helenbake.helenbake.domain.AccountLog();
         try {
-             accountLog =
-                    accountService.createAccountLog(accountLogs, paymentType,user2.getId(), account.get());
+            accountLog =
+                    accountService.createAccountLog(accountLogs, paymentType, user2.getId(), account.get());
         } catch (Exception e) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Something went wrong, Please contact the administrator!!");
@@ -467,5 +489,102 @@ public class AccountController {
         logger.info("New AccountLog created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountLog));
         return ResponseEntity.ok(transactionStatus);
 
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PostMapping("createAccountItemQuantity/{id}")
+    public ResponseEntity<?> createAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetQuan accountDto, BindingResult bindingResult,
+                                                       @AuthenticationPrincipal ProfileDetails profileDetails) {
+
+        if (bindingResult.hasErrors() || accountDto == null || id == 0L) {
+            return ResponseEntity.badRequest().build();
+        }
+        TransactionStatus transactionStatus = new TransactionStatus();
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("User does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
+        Optional<Account> accountOptional = accountRepository.findById(id);
+
+        if (!accountOptional.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Account does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+
+        if (!categoryItem.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Item does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+
+        AccountItemQuantity accountDetails = new AccountItemQuantity();
+        accountDetails.setCategoryItem(categoryItem.get());
+        accountDetails.setAccount(accountOptional.get());
+        accountDetails.setQuantity(accountDto.getQuantity());
+        accountDetails.setCreatedBy(user2.getId());
+        AccountItemQuantity account = accountService.createAccountItemQuantity(accountDetails);
+
+        logger.info("New Account Item Quantity created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
+        transactionStatus.setStatus(true);
+        transactionStatus.setMessage("New Quantity Added!");
+        return ResponseEntity.ok(transactionStatus);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PutMapping("editAccountItemQuantity/{id}")
+    public ResponseEntity<?> editAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetailQuantityCommand accountDto, BindingResult bindingResult,
+                                                     @AuthenticationPrincipal ProfileDetails profileDetails) {
+
+        if (bindingResult.hasErrors() || accountDto == null || id == 0L) {
+            return ResponseEntity.badRequest().build();
+        }
+        TransactionStatus transactionStatus = new TransactionStatus();
+        User user2 = profileDetails.toUser();
+        if (user2 == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
+
+        Optional<Account> accountOptional = accountRepository.findById(id);
+
+        if (!accountOptional.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Account does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        if (!categoryItem.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Account Item Does not Exist!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<AccountItemQuantity> doesExist = accountItemQuantityRepository.findById(accountDto.getId());
+        if (!doesExist.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Quantity Does not Exist!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        Optional<AccountDetails> accountDetais = accountDetailsRepository.findByCategoryItem(categoryItem.get());
+        if (accountDetais.isPresent() && (accountDetais.get().getId() != doesExist.get().getId())) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Category Item Already Exists!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+        if (!accountDetais.isPresent()) {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Category Item does not exist for this Account Item!!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+
+        AccountItemQuantity account = accountService.editAccountItemsQuantity(accountDto, categoryItem.get(), doesExist.get(), user2.getId());
+
+        logger.info("Account Item Edited at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(account));
+        transactionStatus.setStatus(true);
+        transactionStatus.setMessage("Account Item Edited!");
+        return ResponseEntity.ok(transactionStatus);
     }
 }

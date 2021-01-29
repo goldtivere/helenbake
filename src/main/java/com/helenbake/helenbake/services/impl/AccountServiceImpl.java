@@ -1,7 +1,9 @@
 package com.helenbake.helenbake.services.impl;
 
 import com.helenbake.helenbake.command.AccountCommand;
+import com.helenbake.helenbake.command.AccountDetailQuantityCommand;
 import com.helenbake.helenbake.command.AccountIDetailsCommand;
+import com.helenbake.helenbake.converters.AccountDetailsQuantityToCommand;
 import com.helenbake.helenbake.converters.AccountDetailsToCommand;
 import com.helenbake.helenbake.converters.AccountToCommand;
 import com.helenbake.helenbake.domain.*;
@@ -36,25 +38,31 @@ public class AccountServiceImpl implements AccountService {
 
     private AccountRepository accountRepository;
     private AccountToCommand accountToCommand;
+    private AccountDetailsQuantityToCommand accountDetailsQuantityToCommand;
     private AccountDetailsRepository accountDetailsRepository;
     private AccountDetailsToCommand accountDetailsToCommand;
     private CategoryItemRepository categoryItemRepository;
     private CollectionRepository collectionRepository;
     private AccountLogRepository accountLogRepository;
+    private AccountItemQuantityRepository accountItemQuantityRepository;
 
     public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand,
                               AccountDetailsRepository accountDetailsRepository,
                               AccountDetailsToCommand accountDetailsToCommand,
+                              AccountDetailsQuantityToCommand accountDetailsQuantityToCommand,
                               CollectionRepository collectionRepository,
                               AccountLogRepository accountLogRepository,
+                              AccountItemQuantityRepository accountItemQuantityRepository,
                               CategoryItemRepository categoryItemRepository) {
         this.accountRepository = accountRepository;
+        this.accountDetailsQuantityToCommand = accountDetailsQuantityToCommand;
         this.accountToCommand = accountToCommand;
         this.accountDetailsRepository = accountDetailsRepository;
         this.accountDetailsToCommand = accountDetailsToCommand;
         this.categoryItemRepository = categoryItemRepository;
         this.collectionRepository = collectionRepository;
         this.accountLogRepository = accountLogRepository;
+        this.accountItemQuantityRepository = accountItemQuantityRepository;
     }
 
     @Override
@@ -150,9 +158,21 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public AccountItemQuantity createAccountItemQuantity(AccountItemQuantity accountItemQuantity) {
+        return accountItemQuantityRepository.saveAndFlush(accountItemQuantity);
+    }
+
+    @Override
     public Page<AccountIDetailsCommand> listAllAccountItems(BooleanExpression expression, Pageable pageable) {
         Page<AccountDetails> accounts = accountDetailsRepository.findAll(expression, pageable);
         Page<AccountIDetailsCommand> accountIDetailsCommands = accounts.map(accountDetailsToCommand::convert);
+        return accountIDetailsCommands;
+    }
+
+    @Override
+    public Page<AccountDetailQuantityCommand> listAllAccountQuantityItems(BooleanExpression expression, Pageable pageable) {
+        Page<AccountItemQuantity> accounts = accountItemQuantityRepository.findAll(expression, pageable);
+        Page<AccountDetailQuantityCommand> accountIDetailsCommands = accounts.map(accountDetailsQuantityToCommand::convert);
         return accountIDetailsCommands;
     }
 
@@ -163,6 +183,15 @@ public class AccountServiceImpl implements AccountService {
         previous.setUpdatedBy(id);
         previous.setDateupdated(LocalDate.now());
         return accountDetailsRepository.saveAndFlush(previous);
+    }
+
+    @Override
+    public AccountItemQuantity editAccountItemsQuantity(AccountDetailQuantityCommand account, CategoryItem categoryItem, AccountItemQuantity previous, Long id) {
+        previous.setQuantity(account.getQuantity());
+        previous.setCategoryItem(categoryItem);
+        previous.setUpdatedBy(id);
+        previous.setDateupdated(LocalDate.now());
+        return accountItemQuantityRepository.saveAndFlush(previous);
     }
 
     @Override
