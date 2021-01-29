@@ -132,6 +132,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Page<AccountCommand> listAllAccount(BooleanExpression expression, Pageable pageable) {
         Page<Account> accounts = accountRepository.findAll(expression, pageable);
+        accounts.forEach(account -> {
+
+            account.setSoldSoFar(collectionRepository.sumAmount(account));
+        });
         Page<AccountCommand> accountCommands = accounts.map(accountToCommand::convert);
         return accountCommands;
     }
