@@ -256,7 +256,7 @@ public class AccountController {
 
             return ResponseEntity.notFound().build();
         }
-        CustomPredicateBuilder builder = getAccountItemQuantityBuilder(name, quantity,id);
+        CustomPredicateBuilder builder = getAccountItemQuantityBuilder(name, quantity, id);
         Pageable pageRequest =
                 PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("categoryItem.name"), Sort.Order.asc("quantity")));
         Page<AccountDetailQuantityCommand> accountIDetailsCommands = accountService.listAllAccountQuantityItems(builder.build(), pageRequest);
@@ -271,7 +271,7 @@ public class AccountController {
         return builder;
     }
 
-    private CustomPredicateBuilder getAccountItemQuantityBuilder(String name, Long quantity,Long id) {
+    private CustomPredicateBuilder getAccountItemQuantityBuilder(String name, Long quantity, Long id) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountItemQuantity", AccountItemQuantity.class)
                 .with("account.id", Operation.EQUALS, id)
                 .with("categoryItem.name", Operation.LIKE, name)
@@ -586,5 +586,57 @@ public class AccountController {
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Account Item Edited!");
         return ResponseEntity.ok(transactionStatus);
+    }
+
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountReport")
+    public ResponseEntity<Page<AccountReportCommand>> listAccountReport(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                                @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                                @RequestParam(value = "receiptNumber", required = false) String receiptNumber,
+                                                                                @RequestParam(value = "userid", required = false) Long userid,
+                                                                                @RequestParam(value = "itemId", required = false) Long itemId,
+                                                                                @RequestParam(value = "accountId", required = false) Long accountId) {
+        Optional<User> user;
+        Optional<Account> accountOptional;
+        Optional<CategoryItem> categoryItem;
+        if(userid != null)
+        {
+             user= userRepository.findById(userid);
+            if (!user.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+        if(accountId != null) {
+            accountOptional = accountRepository.findById(accountId);
+            if (!accountOptional.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+        if (itemId != null) {
+            categoryItem= categoryItemRepository.findById(itemId);
+            if (!categoryItem.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+
+
+        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId,receiptNumber);
+        Pageable pageRequest =
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("createdBy")));
+        Page<AccountReportCommand> accountIDetailsCommands = accountService.listAllAccountReport(builder.build(), pageRequest);
+        return ResponseEntity.ok(accountIDetailsCommands);
+    }
+
+    private CustomPredicateBuilder getAccountReportBuilder(Long createdBy, Long itemId, Long accountId,String receiptNumber) {
+        CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountLog", com.helenbake.helenbake.domain.AccountLog.class)
+                .with("createdBy", Operation.EQUALS, createdBy)
+                .with("categoryItem.id", Operation.EQUALS, itemId)
+                .with("collections.receiptNumber", Operation.LIKE, receiptNumber)
+                .with("collections.account.id", Operation.EQUALS, accountId);
+        return builder;
     }
 }

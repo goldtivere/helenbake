@@ -3,8 +3,10 @@ package com.helenbake.helenbake.services.impl;
 import com.helenbake.helenbake.command.AccountCommand;
 import com.helenbake.helenbake.command.AccountDetailQuantityCommand;
 import com.helenbake.helenbake.command.AccountIDetailsCommand;
+import com.helenbake.helenbake.command.AccountReportCommand;
 import com.helenbake.helenbake.converters.AccountDetailsQuantityToCommand;
 import com.helenbake.helenbake.converters.AccountDetailsToCommand;
+import com.helenbake.helenbake.converters.AccountLogToCommand;
 import com.helenbake.helenbake.converters.AccountToCommand;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.domain.Collections;
@@ -45,16 +47,19 @@ public class AccountServiceImpl implements AccountService {
     private CollectionRepository collectionRepository;
     private AccountLogRepository accountLogRepository;
     private AccountItemQuantityRepository accountItemQuantityRepository;
+    private AccountLogToCommand accountLogToCommand;
 
     public AccountServiceImpl(AccountRepository accountRepository, AccountToCommand accountToCommand,
                               AccountDetailsRepository accountDetailsRepository,
                               AccountDetailsToCommand accountDetailsToCommand,
+                              AccountLogToCommand accountLogToCommand,
                               AccountDetailsQuantityToCommand accountDetailsQuantityToCommand,
                               CollectionRepository collectionRepository,
                               AccountLogRepository accountLogRepository,
                               AccountItemQuantityRepository accountItemQuantityRepository,
                               CategoryItemRepository categoryItemRepository) {
         this.accountRepository = accountRepository;
+        this.accountLogToCommand = accountLogToCommand;
         this.accountDetailsQuantityToCommand = accountDetailsQuantityToCommand;
         this.accountToCommand = accountToCommand;
         this.accountDetailsRepository = accountDetailsRepository;
@@ -137,6 +142,14 @@ public class AccountServiceImpl implements AccountService {
             account.setSoldSoFar(collectionRepository.sumAmount(account));
         });
         Page<AccountCommand> accountCommands = accounts.map(accountToCommand::convert);
+        return accountCommands;
+    }
+
+    @Override
+    public Page<AccountReportCommand> listAllAccountReport(BooleanExpression expression, Pageable pageable) {
+        Page<AccountLog> accounts = accountLogRepository.findAll(expression, pageable);
+
+        Page<AccountReportCommand> accountCommands = accounts.map(accountLogToCommand::convert);
         return accountCommands;
     }
 

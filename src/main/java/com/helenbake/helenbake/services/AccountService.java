@@ -1,9 +1,6 @@
 package com.helenbake.helenbake.services;
 
-import com.helenbake.helenbake.command.AccountCommand;
-import com.helenbake.helenbake.command.AccountDetailQuantityCommand;
-import com.helenbake.helenbake.command.AccountIDetailsCommand;
-import com.helenbake.helenbake.command.CategoryCommand;
+import com.helenbake.helenbake.command.*;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.dto.AccountDto;
 import com.helenbake.helenbake.dto.AccountLog;
@@ -20,6 +17,7 @@ public interface AccountService {
     Account createAccount(AccountCommand account, Long id);
     Account editAccount(AccountCommand account,Account previous, Long id);
     Page<AccountCommand> listAllAccount(BooleanExpression expression, Pageable pageable);
+    Page<AccountReportCommand> listAllAccountReport(BooleanExpression expression, Pageable pageable);
     Page<AccountIDetailsCommand> listAllAccountItems(BooleanExpression expression, Pageable pageable);
     Page<AccountDetailQuantityCommand> listAllAccountQuantityItems(BooleanExpression expression, Pageable pageable);
     Account enableDisableAccount(Account oldValue, Long updatedBy);
