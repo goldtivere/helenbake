@@ -365,4 +365,14 @@ public class AccountServiceImpl implements AccountService {
         return accountLogss;
 
     }
+
+    @Override
+    public List<AccountCommand> getAccount() {
+        List<AccountCommand> accountCommands= new ArrayList<>();
+         accountRepository.findAll() .forEach(account -> {
+            AccountCommand accountCommand = accountToCommand.convert(account);
+            accountCommands.add(accountCommand);
+        });
+         return accountCommands;
+    }
 }

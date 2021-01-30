@@ -28,5 +28,6 @@ public interface AccountService {
     AccountItemQuantity editAccountItemsQuantity(AccountDetailQuantityCommand account, CategoryItem categoryItem, AccountItemQuantity previous, Long id);
     FileInputStream getCategoryItems() throws IOException;
     AccountCommand getAccountName(Long id);
+    List<AccountCommand> getAccount();
     com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType, Long createdBy,Account account);
 }

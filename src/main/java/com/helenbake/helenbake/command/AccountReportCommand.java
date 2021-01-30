@@ -2,6 +2,7 @@ package com.helenbake.helenbake.command;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class AccountReportCommand {
     private Long id;
@@ -13,6 +14,7 @@ public class AccountReportCommand {
     private LocalDate from;
     private LocalDate to;
     private String soldBy;
+    private LocalDateTime dateCreated;
 
     public Long getId() {
         return id;
@@ -84,5 +86,13 @@ public class AccountReportCommand {
 
     public void setSoldBy(String soldBy) {
         this.soldBy = soldBy;
+    }
+
+    public LocalDateTime getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(LocalDateTime dateCreated) {
+        this.dateCreated = dateCreated;
     }
 }

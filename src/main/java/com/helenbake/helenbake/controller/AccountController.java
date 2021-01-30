@@ -439,6 +439,12 @@ public class AccountController {
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("getaccount")
+    public ResponseEntity<List<AccountCommand>> getCategoryName() {
+        return ResponseEntity.ok(accountService.getAccount());
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("createAccountLog/{id}/{paymentType}")
     public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType, @RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {

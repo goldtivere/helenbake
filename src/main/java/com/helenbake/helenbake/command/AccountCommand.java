@@ -16,7 +16,10 @@ public class AccountCommand {
     private Boolean accountstatus=Boolean.FALSE;
     @NotNull
     private BigDecimal amount= new BigDecimal("0.00");
+
     private BigDecimal soldSoFar = new BigDecimal("0.00");
+
+    private String accountValue;
     public Long getId() {
         return id;
     }
@@ -71,5 +74,13 @@ public class AccountCommand {
 
     public void setSoldSoFar(BigDecimal soldSoFar) {
         this.soldSoFar = soldSoFar;
+    }
+
+    public String getAccountValue() {
+        return accountValue;
+    }
+
+    public void setAccountValue(String accountValue) {
+        this.accountValue = accountValue;
     }
 }
