@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserserviceImpl implements UserService {
@@ -121,5 +123,16 @@ public class UserserviceImpl implements UserService {
         user.setDateupdated(LocalDate.now());
         user.setUpdatedBy(updatedBy);
         return userToCommand.convert(userRepository.saveAndFlush(user));
+    }
+
+    @Override
+    public List<UserCommand> getUsers() {
+        List<UserCommand> userCommands= new ArrayList<>();
+        userRepository.findAll().forEach(user -> {
+            UserCommand userCommand= new UserCommand();
+            userCommand= userToCommand.convert(user);
+            userCommands.add(userCommand);
+        });
+        return userCommands;
     }
 }

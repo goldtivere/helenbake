@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.mail.MessagingException;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -206,4 +207,9 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("getUsersList")
+    public ResponseEntity<List<UserCommand>> getUsers(){
+        return ResponseEntity.ok(userService.getUsers());
+    }
 }
