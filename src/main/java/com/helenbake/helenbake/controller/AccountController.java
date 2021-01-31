@@ -1,6 +1,7 @@
 package com.helenbake.helenbake.controller;
 
 import com.helenbake.helenbake.command.*;
+import com.helenbake.helenbake.converters.AccountLogToCommand;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.dto.*;
 import com.helenbake.helenbake.dto.AccountLog;
@@ -43,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -54,10 +57,14 @@ public class AccountController {
     private UserRepository userRepository;
     private AccountDetailsRepository accountDetailsRepository;
     private CategoryItemRepository categoryItemRepository;
+    private AccountLogRepository accountLogRepository;
+    private AccountLogToCommand accountLogToCommand;
     private AccountItemQuantityRepository accountItemQuantityRepository;
     Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     public AccountController(AccountService accountService, AccountRepository accountRepository,
+                             AccountLogRepository accountLogRepository,
+                             AccountLogToCommand accountLogToCommand,
                              CategoryItemRepository categoryItemRepository,
                              AccountItemQuantityRepository accountItemQuantityRepository,
                              UserRepository userRepository, AccountDetailsRepository accountDetailsRepository) {
@@ -66,6 +73,8 @@ public class AccountController {
         this.userRepository = userRepository;
         this.accountDetailsRepository = accountDetailsRepository;
         this.categoryItemRepository = categoryItemRepository;
+        this.accountLogRepository = accountLogRepository;
+        this.accountLogToCommand = accountLogToCommand;
         this.accountItemQuantityRepository = accountItemQuantityRepository;
     }
 
@@ -596,25 +605,22 @@ public class AccountController {
 
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @GetMapping("accountReport")
-    public ResponseEntity<Page<AccountReportCommand>> listAccountReport(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                                                                @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
-                                                                                @RequestParam(value = "receiptNumber", required = false) String receiptNumber,
+    @GetMapping("accountReport/download")
+    public ResponseEntity<Iterable<AccountReportCommand>> listAccountReportdownload(@RequestParam(value = "receiptNumber", required = false) String receiptNumber,
                                                                                 @RequestParam(value = "userid", required = false) Long userid,
                                                                                 @RequestParam(value = "itemId", required = false) Long itemId,
                                                                                 @RequestParam(value = "accountId", required = false) Long accountId) {
         Optional<User> user;
         Optional<Account> accountOptional;
         Optional<CategoryItem> categoryItem;
-        if(userid != null)
-        {
-             user= userRepository.findById(userid);
+        if (userid != null) {
+            user = userRepository.findById(userid);
             if (!user.isPresent()) {
 
                 return ResponseEntity.notFound().build();
             }
         }
-        if(accountId != null) {
+        if (accountId != null) {
             accountOptional = accountRepository.findById(accountId);
             if (!accountOptional.isPresent()) {
 
@@ -622,7 +628,7 @@ public class AccountController {
             }
         }
         if (itemId != null) {
-            categoryItem= categoryItemRepository.findById(itemId);
+            categoryItem = categoryItemRepository.findById(itemId);
             if (!categoryItem.isPresent()) {
 
                 return ResponseEntity.notFound().build();
@@ -630,14 +636,66 @@ public class AccountController {
         }
 
 
-        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId,receiptNumber);
+        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber);
+
+        Stream<com.helenbake.helenbake.domain.AccountLog> accountLogStream = StreamSupport.stream(accountLogRepository.findAll(builder.build(), getSortObject(null)).spliterator(), false);
+        List<AccountReportCommand> accountReportCommands = accountLogStream.map(accountLogToCommand::convert).collect(Collectors.toList());
+
+        Iterable<AccountReportCommand> accountReportCommands1 = accountReportCommands;
+        return ResponseEntity.ok(accountReportCommands1);
+
+    }
+    private Sort getSortObject(LocalDateTime orderBy) {
+        Sort sort;
+        if (orderBy != null) {
+            sort = Sort.by(String.valueOf(orderBy));
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "datecreated");
+        }
+        return sort;
+    }
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountReport")
+    public ResponseEntity<Page<AccountReportCommand>> listAccountReport(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                        @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                        @RequestParam(value = "receiptNumber", required = false) String receiptNumber,
+                                                                        @RequestParam(value = "userid", required = false) Long userid,
+                                                                        @RequestParam(value = "itemId", required = false) Long itemId,
+                                                                        @RequestParam(value = "accountId", required = false) Long accountId) {
+        Optional<User> user;
+        Optional<Account> accountOptional;
+        Optional<CategoryItem> categoryItem;
+        if (userid != null) {
+            user = userRepository.findById(userid);
+            if (!user.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+        if (accountId != null) {
+            accountOptional = accountRepository.findById(accountId);
+            if (!accountOptional.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+        if (itemId != null) {
+            categoryItem = categoryItemRepository.findById(itemId);
+            if (!categoryItem.isPresent()) {
+
+                return ResponseEntity.notFound().build();
+            }
+        }
+
+
+        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber);
         Pageable pageRequest =
-                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("createdBy")));
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("datecreated")));
         Page<AccountReportCommand> accountIDetailsCommands = accountService.listAllAccountReport(builder.build(), pageRequest);
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
-    private CustomPredicateBuilder getAccountReportBuilder(Long createdBy, Long itemId, Long accountId,String receiptNumber) {
+    private CustomPredicateBuilder getAccountReportBuilder(Long createdBy, Long itemId, Long accountId, String receiptNumber) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountLog", com.helenbake.helenbake.domain.AccountLog.class)
                 .with("createdBy", Operation.EQUALS, createdBy)
                 .with("categoryItem.id", Operation.EQUALS, itemId)
