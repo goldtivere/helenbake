@@ -103,35 +103,35 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private Boolean manipulateAccount(AccountCommand account) {
-        Boolean status = false;
+
         for (Account account1 : accountRepository.findAll()) {
             if ((account.getTo().isAfter(account1.getFromDate()) && account.getTo().isBefore(account1.getToDate()))
                     || (account.getFrom().isAfter(account1.getFromDate()) && account.getFrom().isBefore(account1.getToDate()))
-                    || account.getFrom().isEqual(account1.getFromDate()) || account.getFrom().isEqual(account1.getToDate())
+                    || account.getFrom().isEqual(account1.getFromDate())
                     || account.getTo().isEqual(account1.getFromDate()) || account.getTo().isEqual(account1.getToDate())) {
-                status = true;
+               return true;
 
             }
-            break;
+
         }
-        return status;
+        return false;
     }
 
     private Boolean manipulateAccountEdit(AccountCommand account,Account previous) {
-        Boolean status = false;
+
         for (Account account1 : accountRepository.findAll()) {
             if(previous.getId() !=account.getId()) {
                 if ((account.getTo().isAfter(account1.getFromDate()) && account.getTo().isBefore(account1.getToDate()))
                         || (account.getFrom().isAfter(account1.getFromDate()) && account.getFrom().isBefore(account1.getToDate()))
-                        || account.getFrom().isEqual(account1.getFromDate()) || account.getFrom().isEqual(account1.getToDate())
+                        || account.getFrom().isEqual(account1.getFromDate())
                         || account.getTo().isEqual(account1.getFromDate()) || account.getTo().isEqual(account1.getToDate())) {
-                    status = true;
+                    return true;
 
                 }
             }
-            break;
+
         }
-        return status;
+        return false;
     }
 
     @Override

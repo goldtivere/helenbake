@@ -58,6 +58,10 @@ public class CustomPredicate<T> {
                 DateTimePath<LocalDateTime> path = entityPath.getDateTime(criteria.getKey(), LocalDateTime.class);
                 return path.loe((LocalDateTime) criteria.getValue());
             }
+            else if (criteria.getOperation().equals(Operation.GREATER_THAN_OR_EQUAL)) {
+                DateTimePath<LocalDateTime> path = entityPath.getDateTime(criteria.getKey(), LocalDateTime.class);
+                return path.goe((LocalDateTime) criteria.getValue());
+            }
         } else if (criteria.getOperation().getType().equalsIgnoreCase("enum")) {
             return EnumBooleanExpression.getExpression(criteria.getKey(), criteria.getValue(), entityPath);
         } else if (criteria.getOperation().getType().equalsIgnoreCase("boolean")) {

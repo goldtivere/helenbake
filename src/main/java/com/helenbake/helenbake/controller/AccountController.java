@@ -607,9 +607,11 @@ public class AccountController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("accountReport/download")
     public ResponseEntity<Iterable<AccountReportCommand>> listAccountReportdownload(@RequestParam(value = "receiptNumber", required = false) String receiptNumber,
-                                                                                @RequestParam(value = "userid", required = false) Long userid,
-                                                                                @RequestParam(value = "itemId", required = false) Long itemId,
-                                                                                @RequestParam(value = "accountId", required = false) Long accountId) {
+                                                                                    @RequestParam(value = "userid", required = false) Long userid,
+                                                                                    @RequestParam(value = "itemId", required = false) Long itemId,
+                                                                                    @RequestParam(value = "to", required = false) String too,
+                                                                                    @RequestParam(value = "from", required = false) String fromm,
+                                                                                    @RequestParam(value = "accountId", required = false) Long accountId) {
         Optional<User> user;
         Optional<Account> accountOptional;
         Optional<CategoryItem> categoryItem;
@@ -619,6 +621,18 @@ public class AccountController {
 
                 return ResponseEntity.notFound().build();
             }
+        }
+        LocalDate to = null;
+        LocalDate from = null;
+        try {
+            if (too != null) {
+                to = LocalDate.parse(too);
+            }
+            if (fromm != null) {
+                from = LocalDate.parse(fromm);
+            }
+        } catch (DateTimeException e) {
+            return ResponseEntity.badRequest().build();
         }
         if (accountId != null) {
             accountOptional = accountRepository.findById(accountId);
@@ -636,7 +650,7 @@ public class AccountController {
         }
 
 
-        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber);
+        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber, from, to);
 
         Stream<com.helenbake.helenbake.domain.AccountLog> accountLogStream = StreamSupport.stream(accountLogRepository.findAll(builder.build(), getSortObject(null)).spliterator(), false);
         List<AccountReportCommand> accountReportCommands = accountLogStream.map(accountLogToCommand::convert).collect(Collectors.toList());
@@ -645,6 +659,7 @@ public class AccountController {
         return ResponseEntity.ok(accountReportCommands1);
 
     }
+
     private Sort getSortObject(LocalDateTime orderBy) {
         Sort sort;
         if (orderBy != null) {
@@ -654,6 +669,7 @@ public class AccountController {
         }
         return sort;
     }
+
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("accountReport")
     public ResponseEntity<Page<AccountReportCommand>> listAccountReport(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
@@ -661,6 +677,8 @@ public class AccountController {
                                                                         @RequestParam(value = "receiptNumber", required = false) String receiptNumber,
                                                                         @RequestParam(value = "userid", required = false) Long userid,
                                                                         @RequestParam(value = "itemId", required = false) Long itemId,
+                                                                        @RequestParam(value = "to", required = false) String too,
+                                                                        @RequestParam(value = "from", required = false) String fromm,
                                                                         @RequestParam(value = "accountId", required = false) Long accountId) {
         Optional<User> user;
         Optional<Account> accountOptional;
@@ -679,6 +697,18 @@ public class AccountController {
                 return ResponseEntity.notFound().build();
             }
         }
+        LocalDate to = null;
+        LocalDate from = null;
+        try {
+            if (too != null) {
+                to = LocalDate.parse(too);
+            }
+            if (fromm != null) {
+                from = LocalDate.parse(fromm);
+            }
+        } catch (DateTimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
         if (itemId != null) {
             categoryItem = categoryItemRepository.findById(itemId);
             if (!categoryItem.isPresent()) {
@@ -688,17 +718,28 @@ public class AccountController {
         }
 
 
-        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber);
+        CustomPredicateBuilder builder = getAccountReportBuilder(userid, itemId, accountId, receiptNumber, from, to);
         Pageable pageRequest =
-                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("datecreated")));
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("id")));
         Page<AccountReportCommand> accountIDetailsCommands = accountService.listAllAccountReport(builder.build(), pageRequest);
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
-    private CustomPredicateBuilder getAccountReportBuilder(Long createdBy, Long itemId, Long accountId, String receiptNumber) {
+    private CustomPredicateBuilder getAccountReportBuilder(Long createdBy, Long itemId, Long accountId, String receiptNumber, LocalDate fromm, LocalDate too) {
+        LocalDateTime frm = null;
+        LocalDateTime tt = null;
+        if (fromm != null) {
+            frm = fromm.atStartOfDay();
+        }
+
+        if (too != null) {
+            tt = too.atStartOfDay();
+        }
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountLog", com.helenbake.helenbake.domain.AccountLog.class)
                 .with("createdBy", Operation.EQUALS, createdBy)
                 .with("categoryItem.id", Operation.EQUALS, itemId)
+                .with("datecreated", Operation.GREATER_THAN_OR_EQUAL, frm)
+                .with("datecreated", Operation.LESS_THAN_OR_EQUAL, tt)
                 .with("collections.receiptNumber", Operation.LIKE, receiptNumber)
                 .with("collections.account.id", Operation.EQUALS, accountId);
         return builder;

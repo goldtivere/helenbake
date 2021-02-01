@@ -5,7 +5,7 @@ package com.helenbake.helenbake.repo.predicate;
  */
 public enum Operation {
     LIKE("string"), EQUALS("number"), LESS("number"), GREATER("number"), STRING_EQUALS("string"), BETWEEN("date"),
-    DATE_EQUALS("date"),LESS_THAN_OR_EQUAL("date"),ENUM("enum"), BOOLEAN("boolean");
+    DATE_EQUALS("date"),LESS_THAN_OR_EQUAL("date"),GREATER_THAN_OR_EQUAL("date"),ENUM("enum"), BOOLEAN("boolean");
 
     private final String type;
 
