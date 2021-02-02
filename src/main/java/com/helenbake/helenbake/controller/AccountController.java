@@ -1,6 +1,7 @@
 package com.helenbake.helenbake.controller;
 
 import com.helenbake.helenbake.command.*;
+import com.helenbake.helenbake.converters.AccountDetailsQuantityToCommand;
 import com.helenbake.helenbake.converters.AccountLogToCommand;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.dto.*;
@@ -59,12 +60,14 @@ public class AccountController {
     private CategoryItemRepository categoryItemRepository;
     private AccountLogRepository accountLogRepository;
     private AccountLogToCommand accountLogToCommand;
+    AccountDetailsQuantityToCommand accountDetailsQuantityToCommand;
     private AccountItemQuantityRepository accountItemQuantityRepository;
     Logger logger = LoggerFactory.getLogger(AccountController.class);
 
     public AccountController(AccountService accountService, AccountRepository accountRepository,
                              AccountLogRepository accountLogRepository,
                              AccountLogToCommand accountLogToCommand,
+                             AccountDetailsQuantityToCommand accountDetailsQuantityToCommand,
                              CategoryItemRepository categoryItemRepository,
                              AccountItemQuantityRepository accountItemQuantityRepository,
                              UserRepository userRepository, AccountDetailsRepository accountDetailsRepository) {
@@ -76,6 +79,7 @@ public class AccountController {
         this.accountLogRepository = accountLogRepository;
         this.accountLogToCommand = accountLogToCommand;
         this.accountItemQuantityRepository = accountItemQuantityRepository;
+        this.accountDetailsQuantityToCommand= accountDetailsQuantityToCommand;
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -205,7 +209,7 @@ public class AccountController {
         return ResponseEntity.ok(transactionStatus);
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping
     public ResponseEntity<Page<AccountCommand>> listAccount(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
                                                             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
@@ -226,7 +230,7 @@ public class AccountController {
         }
         CustomPredicateBuilder builder = getAccountBuilder(to, from);
         Pageable pageRequest =
-                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("toDate"), Sort.Order.asc("fromDate")));
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.desc("datecreated")));
         Page<AccountCommand> accountCommands = accountService.listAllAccount(builder.build(), pageRequest);
         return ResponseEntity.ok(accountCommands);
     }
@@ -238,7 +242,7 @@ public class AccountController {
         return builder;
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("accountItem")
     public ResponseEntity<Page<AccountIDetailsCommand>> listAccountItem(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
                                                                         @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
@@ -251,7 +255,7 @@ public class AccountController {
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("accountItemQuantity/{id}")
     public ResponseEntity<Page<AccountDetailQuantityCommand>> listAccountQuantity(@PathVariable("id") Long id,
                                                                                   @RequestParam(value = "page", required = false, defaultValue = "0") int page,
@@ -272,6 +276,37 @@ public class AccountController {
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountItemQuantityReport")
+    public ResponseEntity<Page<AccountDetailQuantityCommand>> listAccountQuantityReport(
+                                                                                  @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                                  @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                                  @RequestParam(value = "id", required = false) Long id,
+                                                                                  @RequestParam(value = "to", required = false) String too,
+                                                                                  @RequestParam(value = "from", required = false) String fromm,
+                                                                                  @RequestParam(value = "name", required = false) String name,
+                                                                                  @RequestParam(value = "quantity", required = false) Long quantity) {
+
+
+        LocalDate to = null;
+        LocalDate from = null;
+        try {
+            if (too != null) {
+                to = LocalDate.parse(too);
+            }
+            if (fromm != null) {
+                from = LocalDate.parse(fromm);
+            }
+        } catch (DateTimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+        CustomPredicateBuilder builder = getAccountItemQuantityReportBuilder(name, quantity, id,from,to);
+        Pageable pageRequest =
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.asc("categoryItem.name")));
+        Page<AccountDetailQuantityCommand> accountIDetailsCommands = accountService.listAllAccountQuantityItems(builder.build(), pageRequest);
+        return ResponseEntity.ok(accountIDetailsCommands);
+    }
+
 
     private CustomPredicateBuilder getAccountItemBuilder(String name, BigDecimal pricePerUnit) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountDetails", AccountDetails.class)
@@ -283,6 +318,24 @@ public class AccountController {
     private CustomPredicateBuilder getAccountItemQuantityBuilder(String name, Long quantity, Long id) {
         CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountItemQuantity", AccountItemQuantity.class)
                 .with("account.id", Operation.EQUALS, id)
+                .with("categoryItem.name", Operation.LIKE, name)
+                .with("quantity", Operation.EQUALS, quantity);
+        return builder;
+    }
+    private CustomPredicateBuilder getAccountItemQuantityReportBuilder(String name, Long quantity, Long id,LocalDate from,LocalDate to) {
+        LocalDateTime frm = null;
+        LocalDateTime tt = null;
+        if (from != null) {
+            frm = from.atStartOfDay();
+        }
+
+        if (to != null) {
+            tt = to.atStartOfDay();
+        }
+        CustomPredicateBuilder builder = new CustomPredicateBuilder<>("accountItemQuantity", AccountItemQuantity.class)
+                .with("account.id", Operation.EQUALS, id)
+                .with("datecreated", Operation.GREATER_THAN_OR_EQUAL, frm)
+                .with("datecreated", Operation.LESS_THAN_OR_EQUAL, tt)
                 .with("categoryItem.name", Operation.LIKE, name)
                 .with("quantity", Operation.EQUALS, quantity);
         return builder;
@@ -441,13 +494,13 @@ public class AccountController {
         return ResponseEntity.ok(transactionStatus);
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("accountName/{id}")
     public ResponseEntity<AccountCommand> getCategoryName(@PathVariable("id") Long id) {
         return ResponseEntity.ok(accountService.getAccountName(id));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("getaccount")
     public ResponseEntity<List<AccountCommand>> getCategoryName() {
         return ResponseEntity.ok(accountService.getAccount());
@@ -506,7 +559,7 @@ public class AccountController {
 
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     @PostMapping("createAccountItemQuantity/{id}")
     public ResponseEntity<?> createAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetQuan accountDto, BindingResult bindingResult,
                                                        @AuthenticationPrincipal ProfileDetails profileDetails) {
@@ -549,7 +602,7 @@ public class AccountController {
         return ResponseEntity.ok(transactionStatus);
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     @PutMapping("editAccountItemQuantity/{id}")
     public ResponseEntity<?> editAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetailQuantityCommand accountDto, BindingResult bindingResult,
                                                      @AuthenticationPrincipal ProfileDetails profileDetails) {
@@ -601,6 +654,39 @@ public class AccountController {
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Account Item Edited!");
         return ResponseEntity.ok(transactionStatus);
+    }
+
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @GetMapping("accountItemQuantityReport/download")
+    public ResponseEntity<Iterable<AccountDetailQuantityCommand>> listAccountQuantityReportDownload(
+            @RequestParam(value = "id", required = false) Long id,
+            @RequestParam(value = "to", required = false) String too,
+            @RequestParam(value = "from", required = false) String fromm,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "quantity", required = false) Long quantity) {
+
+
+        LocalDate to = null;
+        LocalDate from = null;
+        try {
+            if (too != null) {
+                to = LocalDate.parse(too);
+            }
+            if (fromm != null) {
+                from = LocalDate.parse(fromm);
+            }
+        } catch (DateTimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+
+        CustomPredicateBuilder builder = getAccountItemQuantityReportBuilder(name, quantity, id,from,to);
+
+        Stream<AccountItemQuantity> accountLogStream = StreamSupport.stream(accountItemQuantityRepository.findAll(builder.build(), getSortObject(null)).spliterator(), false);
+        List<AccountDetailQuantityCommand> accountReportCommands = accountLogStream.map(accountDetailsQuantityToCommand::convert).collect(Collectors.toList());
+
+        Iterable<AccountDetailQuantityCommand> accountReportCommands1 = accountReportCommands;
+        return ResponseEntity.ok(accountReportCommands1);
     }
 
 

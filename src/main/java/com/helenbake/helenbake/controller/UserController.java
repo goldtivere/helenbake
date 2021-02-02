@@ -116,7 +116,7 @@ public class UserController {
         return ResponseEntity.ok(userCommand1);
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     @GetMapping
     public ResponseEntity<Page<UserCommand>> listUsers(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
                                                               @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
@@ -207,7 +207,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
     @GetMapping("getUsersList")
     public ResponseEntity<List<UserCommand>> getUsers(){
         return ResponseEntity.ok(userService.getUsers());
