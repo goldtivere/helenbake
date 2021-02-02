@@ -14,6 +14,7 @@ public class AccountReportCommand {
     private LocalDate from;
     private LocalDate to;
     private String soldBy;
+    private String paymentType;
     private LocalDateTime dateCreated;
 
     public Long getId() {
@@ -94,5 +95,13 @@ public class AccountReportCommand {
 
     public void setDateCreated(LocalDateTime dateCreated) {
         this.dateCreated = dateCreated;
+    }
+
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
     }
 }

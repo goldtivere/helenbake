@@ -95,6 +95,12 @@ public class AccountController {
         if (user2 == null) {
             return ResponseEntity.notFound().build();
         }
+        if(Integer.parseInt(accountDto.getAmount().toString()) <= 0)
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Amount cannot be less than or equal to zero!");
+            return ResponseEntity.ok(transactionStatus);
+        }
         LocalDate to;
         LocalDate from;
         try {
@@ -356,6 +362,13 @@ public class AccountController {
             transactionStatus.setMessage("User does not exist!");
             return ResponseEntity.ok(transactionStatus);
         }
+
+        if(Integer.parseInt(accountDto.getPricePerUnit().toString()) <= 0)
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Amount cannot be less than or equal zero!");
+            return ResponseEntity.ok(transactionStatus);
+        }
         Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
 
 
@@ -443,7 +456,7 @@ public class AccountController {
     }
 
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile files, @AuthenticationPrincipal ProfileDetails profileDetails) {
         if (files.isEmpty() || files == null) {
@@ -489,6 +502,14 @@ public class AccountController {
             return ResponseEntity.ok(transactionStatus);
 
         }
+        catch (Exception e) {
+            e.printStackTrace();
+            logger.error(e.getMessage());
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Something went wrong! Kindly contact your Administrator!");
+            return ResponseEntity.ok(transactionStatus);
+
+        }
         transactionStatus.setStatus(true);
         transactionStatus.setMessage("Upload Successful");
         return ResponseEntity.ok(transactionStatus);
@@ -506,7 +527,7 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccount());
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @PostMapping("createAccountLog/{id}/{paymentType}")
     public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType, @RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {
@@ -531,6 +552,13 @@ public class AccountController {
                 if (!categoryItem.isPresent()) {
                     transactionStatus.setStatus(false);
                     transactionStatus.setMessage("Category Item not found!");
+                    return ResponseEntity.ok(transactionStatus);
+                }
+
+                if(Integer.parseInt(accountLo.getPricePerUnit().toString()) <= 0 || accountLo.getUnit() <=0 )
+                {
+                    transactionStatus.setStatus(false);
+                    transactionStatus.setMessage("Negative Values are not allowed");
                     return ResponseEntity.ok(transactionStatus);
                 }
             } catch (Exception e) {
@@ -559,7 +587,7 @@ public class AccountController {
 
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("createAccountItemQuantity/{id}")
     public ResponseEntity<?> createAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetQuan accountDto, BindingResult bindingResult,
                                                        @AuthenticationPrincipal ProfileDetails profileDetails) {
@@ -572,6 +600,13 @@ public class AccountController {
         if (user2 == null) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("User does not exist!");
+            return ResponseEntity.ok(transactionStatus);
+        }
+
+        if(accountDto.getQuantity()<=0)
+        {
+            transactionStatus.setStatus(false);
+            transactionStatus.setMessage("Quantity cannot be less than or equal to zero!");
             return ResponseEntity.ok(transactionStatus);
         }
         Optional<CategoryItem> categoryItem = categoryItemRepository.findById(accountDto.getCategoryItemId());
@@ -602,7 +637,7 @@ public class AccountController {
         return ResponseEntity.ok(transactionStatus);
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PutMapping("editAccountItemQuantity/{id}")
     public ResponseEntity<?> editAccountItemQuantity(@PathVariable("id") Long id, @RequestBody @Valid AccountDetailQuantityCommand accountDto, BindingResult bindingResult,
                                                      @AuthenticationPrincipal ProfileDetails profileDetails) {

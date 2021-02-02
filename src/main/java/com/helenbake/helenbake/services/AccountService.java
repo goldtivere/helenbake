@@ -4,6 +4,7 @@ import com.helenbake.helenbake.command.*;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.dto.AccountDto;
 import com.helenbake.helenbake.dto.AccountLog;
+import com.helenbake.helenbake.exception.InvalidDataException;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public interface AccountService {
     Account enableDisableAccount(Account oldValue, Long updatedBy);
     AccountDetails createAccountItem(AccountDetails accountDetails);
     AccountItemQuantity createAccountItemQuantity(AccountItemQuantity accountItemQuantity);
-    List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException;
+    List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException, InvalidDataException;
     AccountDetails editAccountItems(AccountIDetailsCommand account, CategoryItem categoryItem,AccountDetails previous, Long id);
     AccountItemQuantity editAccountItemsQuantity(AccountDetailQuantityCommand account, CategoryItem categoryItem, AccountItemQuantity previous, Long id);
     FileInputStream getCategoryItems() throws IOException;

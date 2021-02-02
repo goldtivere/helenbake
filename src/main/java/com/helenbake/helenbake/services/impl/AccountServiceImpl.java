@@ -11,10 +11,10 @@ import com.helenbake.helenbake.converters.AccountToCommand;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.domain.Collections;
 import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.exception.InvalidDataException;
 import com.helenbake.helenbake.repo.*;
 import com.helenbake.helenbake.services.AccountService;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.sun.media.sound.InvalidDataException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -262,7 +262,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException {
+    public List<AccountDetails> uploadFile(MultipartFile files, Long createdBy) throws IOException, InvalidDataException {
 
         XSSFWorkbook workbook = new XSSFWorkbook(files.getInputStream());
         XSSFSheet sheet = workbook.getSheetAt(0);
@@ -289,6 +289,11 @@ public class AccountServiceImpl implements AccountService {
             accountDetails1.setCategoryItem(categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim())).get() );
 
             accountDetails1.setPricePerUnit(new BigDecimal(formatter.formatCellValue(row.getCell(2) )));
+            if(Integer.parseInt(accountDetails1.getPricePerUnit().toString()) <=0)
+            {
+                InvalidDataException invalidDataException= new InvalidDataException("Amount cannot be less than or equal to zero");
+                throw  invalidDataException;
+            }
             accountDetails1.setCreatedBy(createdBy);
             accountDetails.add(accountDetails1);
         }

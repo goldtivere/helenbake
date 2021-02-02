@@ -226,7 +226,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getCategoryName(id));
     }
 
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("categoryItemList")
     public ResponseEntity<List<CategoryIte>> CategoryItemList(@AuthenticationPrincipal ProfileDetails profileDetails) {
 
