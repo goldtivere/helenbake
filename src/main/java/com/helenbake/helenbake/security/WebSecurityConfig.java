@@ -54,17 +54,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private static final String[] FRONT_END_WHITELIST = {
             "/assets/**/*",
-            "/tmp/xmlcallschema/*",
             "/static/**/*",
-            "/error.html",
-            "/success.html",
-            "/failure.html",
-            "/main*.*.js",
+            "/main-*.js",
             "/scripts.*.js",
-            "/configuration/security",
-            "/polyfills*.*.js",
-            "/runtime*.*.js",
-            "/styles.*.css"
+            "/polyfills-*.js",
+            "/runtime-*.js",
+            "/nucleo-icons.*.ttf",
+            "/nucleo-icons.*.woff",
+            "/nucleo-icons.*.woff2",
+            "/nucleo-icons.*.eot",
+            "/styles.*.css",
+            "/styles.*.js",
+            "/vendor.*.js",
+            "/main-js",
+            "/scripts.js",
+            "/polyfills.js",
+            "/runtime.js",
+            "/styles.css",
+            "/styles.js",
+            "/vendor.js"
     };
     private static final String[] UNAUTHENTICATED_ROUTES = new String[] {
             "/api/v1/register/confirmPayment?{.+}&{.+}",
