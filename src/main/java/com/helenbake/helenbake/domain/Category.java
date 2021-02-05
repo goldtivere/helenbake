@@ -13,8 +13,10 @@ public class Category extends BaseEntity {
     @Column(name = "name")
     private String name;
 
+
+    //    @Column(name = "description", unique = true)
     @NotNull
-    @Column(name = "description", unique = true)
+    @Column(name = "description")
     private String description;
 
     public String getName() {

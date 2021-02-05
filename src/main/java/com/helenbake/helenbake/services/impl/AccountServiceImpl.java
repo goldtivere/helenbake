@@ -239,12 +239,15 @@ public class AccountServiceImpl implements AccountService {
         }
         int rowNum = 1;
         for(CategoryItem categoryItem: categoryItemList) {
-            Row row = sheet.createRow(rowNum++);
 
-            row.createCell(0)
-                    .setCellValue(categoryItem.getId());
-            row.createCell(1)
-                    .setCellValue(categoryItem.getName());
+            Optional<AccountDetails> accountDetail = accountDetailsRepository.findByCategoryItem(categoryItem);
+            if(!accountDetail.isPresent()) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0)
+                        .setCellValue(categoryItem.getId());
+                row.createCell(1)
+                        .setCellValue(categoryItem.getName());
+            }
         }
         for(int i = 0; i < columns.length; i++) {
             sheet.autoSizeColumn(i);

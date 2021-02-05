@@ -15,7 +15,7 @@ public class CategoryItem extends  BaseEntity {
     private String name;
 
     @NotNull
-    @Column(name = "description", unique = true)
+    @Column(name = "description")
     private String description;
 
     public Category getCategory() {
