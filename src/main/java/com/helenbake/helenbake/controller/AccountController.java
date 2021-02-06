@@ -60,6 +60,7 @@ public class AccountController {
     private CategoryItemRepository categoryItemRepository;
     private AccountLogRepository accountLogRepository;
     private AccountLogToCommand accountLogToCommand;
+    private CollectionRepository collectionRepository;
     AccountDetailsQuantityToCommand accountDetailsQuantityToCommand;
     private AccountItemQuantityRepository accountItemQuantityRepository;
     Logger logger = LoggerFactory.getLogger(AccountController.class);
@@ -67,6 +68,7 @@ public class AccountController {
     public AccountController(AccountService accountService, AccountRepository accountRepository,
                              AccountLogRepository accountLogRepository,
                              AccountLogToCommand accountLogToCommand,
+                             CollectionRepository collectionRepository,
                              AccountDetailsQuantityToCommand accountDetailsQuantityToCommand,
                              CategoryItemRepository categoryItemRepository,
                              AccountItemQuantityRepository accountItemQuantityRepository,
@@ -78,6 +80,7 @@ public class AccountController {
         this.categoryItemRepository = categoryItemRepository;
         this.accountLogRepository = accountLogRepository;
         this.accountLogToCommand = accountLogToCommand;
+        this.collectionRepository = collectionRepository;
         this.accountItemQuantityRepository = accountItemQuantityRepository;
         this.accountDetailsQuantityToCommand= accountDetailsQuantityToCommand;
     }
@@ -527,13 +530,29 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccount());
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN')")
+    @GetMapping("getaccountlog/{id}")
+    public ResponseEntity<List<AccountReportCommand>> getAccountLog(@PathVariable("id") Long id) {
+        if(id == 0L)
+        {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<Collections> collections= collectionRepository.findById(id);
+        if(!collections.isPresent())
+        {
+            return ResponseEntity.notFound().build();
+        }
+        List<AccountReportCommand> accountLog= accountService.getAccountReport(collections.get());
+        return ResponseEntity.ok(accountLog);
+    }
+
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
-    @PostMapping("createAccountLog/{id}/{paymentType}")
-    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType, @RequestParam("accountdto") String accountdto,
+    @PostMapping("createAccountLog/{id}/{paymentType}/{customerName}")
+    public ResponseEntity<?> createAccountLog(@PathVariable("id") Long id, @PathVariable("paymentType") String paymentType, @PathVariable("customerName") String customerName, @RequestParam("accountdto") String accountdto,
                                               @AuthenticationPrincipal ProfileDetails profileDetails) {
 
 
-        if (accountdto.isEmpty() || accountdto == null || id == 0L || paymentType.isEmpty() || paymentType == null) {
+        if (accountdto.isEmpty() || accountdto == null || id == 0L || paymentType.isEmpty() || paymentType == null || customerName.isEmpty() || customerName==null) {
             return ResponseEntity.badRequest().build();
         }
         TransactionStatus transactionStatus = new TransactionStatus();
@@ -571,7 +590,7 @@ public class AccountController {
         com.helenbake.helenbake.domain.AccountLog accountLog = new com.helenbake.helenbake.domain.AccountLog();
         try {
             accountLog =
-                    accountService.createAccountLog(accountLogs, paymentType, user2.getId(), account.get());
+                    accountService.createAccountLog(accountLogs, paymentType,customerName, user2.getId(), account.get());
         } catch (Exception e) {
             transactionStatus.setStatus(false);
             transactionStatus.setMessage("Something went wrong, Please contact the administrator!!");
@@ -865,4 +884,58 @@ public class AccountController {
                 .with("collections.account.id", Operation.EQUALS, accountId);
         return builder;
     }
+
+
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
+    @GetMapping("accountCollection")
+    public ResponseEntity<Page<CollectionCommand>> listAccountCollection(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                        @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                        @RequestParam(value = "receiptNumber", required = false) String receiptNumber,
+                                                                        @RequestParam(value = "customerName", required = false) String customerName,
+                                                                        @RequestParam(value = "to", required = false) String too,
+                                                                        @RequestParam(value = "from", required = false) String fromm) {
+
+
+        LocalDate to = null;
+        LocalDate from = null;
+        try {
+            if (too != null) {
+                to = LocalDate.parse(too);
+            }
+            if (fromm != null) {
+                from = LocalDate.parse(fromm);
+            }
+        } catch (DateTimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+
+
+        CustomPredicateBuilder builder = getAccountCollectionBuilder(customerName, receiptNumber, from, to);
+        Pageable pageRequest =
+                PageUtil.createPageRequest(page, pageSize, Sort.by(Sort.Order.desc("id")));
+        Page<CollectionCommand> accountIDetailsCommands = accountService.listAccountCollection(builder.build(), pageRequest);
+        return ResponseEntity.ok(accountIDetailsCommands);
+    }
+
+    private CustomPredicateBuilder getAccountCollectionBuilder(String customerName, String receiptNumber, LocalDate fromm, LocalDate too) {
+        LocalDateTime frm = null;
+        LocalDateTime tt = null;
+        if (fromm != null) {
+            frm = fromm.atStartOfDay();
+        }
+
+        if (too != null) {
+            tt = too.atStartOfDay();
+        }
+        CustomPredicateBuilder builder = new CustomPredicateBuilder<>("collections", Collections.class)
+                .with("datecreated", Operation.GREATER_THAN_OR_EQUAL, frm)
+                .with("datecreated", Operation.LESS_THAN_OR_EQUAL, tt)
+                .with("receiptNumber", Operation.LIKE, receiptNumber)
+                .with("customerName", Operation.LIKE, customerName);
+        return builder;
+    }
+
+
+
 }

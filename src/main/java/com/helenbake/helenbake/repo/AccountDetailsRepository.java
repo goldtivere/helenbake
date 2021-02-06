@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface AccountDetailsRepository extends JpaRepository<AccountDetails,Long>, QuerydslPredicateExecutor<AccountDetails> {
     Optional<AccountDetails> findByCategoryItem(CategoryItem categoryItem);
+
 }
+

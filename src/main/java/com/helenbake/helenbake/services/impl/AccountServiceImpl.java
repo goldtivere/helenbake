@@ -1,13 +1,7 @@
 package com.helenbake.helenbake.services.impl;
 
-import com.helenbake.helenbake.command.AccountCommand;
-import com.helenbake.helenbake.command.AccountDetailQuantityCommand;
-import com.helenbake.helenbake.command.AccountIDetailsCommand;
-import com.helenbake.helenbake.command.AccountReportCommand;
-import com.helenbake.helenbake.converters.AccountDetailsQuantityToCommand;
-import com.helenbake.helenbake.converters.AccountDetailsToCommand;
-import com.helenbake.helenbake.converters.AccountLogToCommand;
-import com.helenbake.helenbake.converters.AccountToCommand;
+import com.helenbake.helenbake.command.*;
+import com.helenbake.helenbake.converters.*;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.domain.Collections;
 import com.helenbake.helenbake.dto.AccountDto;
@@ -45,6 +39,7 @@ public class AccountServiceImpl implements AccountService {
     private AccountDetailsToCommand accountDetailsToCommand;
     private CategoryItemRepository categoryItemRepository;
     private CollectionRepository collectionRepository;
+    private CollectionToCommand collectionToCommand;
     private AccountLogRepository accountLogRepository;
     private AccountItemQuantityRepository accountItemQuantityRepository;
     private AccountLogToCommand accountLogToCommand;
@@ -56,6 +51,7 @@ public class AccountServiceImpl implements AccountService {
                               AccountDetailsQuantityToCommand accountDetailsQuantityToCommand,
                               CollectionRepository collectionRepository,
                               AccountLogRepository accountLogRepository,
+                              CollectionToCommand collectionToCommand,
                               AccountItemQuantityRepository accountItemQuantityRepository,
                               CategoryItemRepository categoryItemRepository) {
         this.accountRepository = accountRepository;
@@ -67,6 +63,7 @@ public class AccountServiceImpl implements AccountService {
         this.categoryItemRepository = categoryItemRepository;
         this.collectionRepository = collectionRepository;
         this.accountLogRepository = accountLogRepository;
+        this.collectionToCommand = collectionToCommand;
         this.accountItemQuantityRepository = accountItemQuantityRepository;
     }
 
@@ -312,8 +309,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog,String paymentType, Long createdBy,Account account) {
-        Collections collections= saveCollections(accountLog,account,paymentType,createdBy);
+    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog,String paymentType,String customerName, Long createdBy,Account account) {
+        Collections collections= saveCollections(accountLog,account,paymentType,customerName,createdBy);
         AccountLog accountLog1= saveAccountLog(collections,accountLog,createdBy);
         accountLog1.setRefCode(collections.getReceiptNumber());
         accountLog1.setPayMethod(collections.getPaymentType());
@@ -323,7 +320,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,String paymentType,Long createdBy)
+    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,String paymentType,String customerName,Long createdBy)
     {
         Collections collections= new Collections();
         BigDecimal totalVal= new BigDecimal("0.00");
@@ -344,6 +341,7 @@ public class AccountServiceImpl implements AccountService {
             collections.setReceiptNumber("HB0"+1);
         }
         collections.setAccount(account);
+        collections.setCustomerName(customerName);
         collections.setTotal(totalVal);
         collections.setCreatedBy(createdBy);
         collections.setPaymentType(paymentType);
@@ -383,4 +381,22 @@ public class AccountServiceImpl implements AccountService {
         });
          return accountCommands;
     }
+
+    @Override
+    public Page<CollectionCommand> listAccountCollection(BooleanExpression expression, Pageable pageable) {
+        Page<Collections> collections = collectionRepository.findAll(expression, pageable);
+
+        Page<CollectionCommand> collectionCommands = collections.map(collectionToCommand::convert);
+        return collectionCommands;
+    }
+
+    @Override
+    public List<AccountReportCommand> getAccountReport(Collections collections) {
+        List<AccountReportCommand> accountReportCommands= new ArrayList<>();
+        accountLogRepository.findByCollections(collections) .forEach(account -> {
+            AccountReportCommand accountCommand = accountLogToCommand.convert(account);
+            accountReportCommands.add(accountCommand);
+        });
+        return accountReportCommands;
+}
 }

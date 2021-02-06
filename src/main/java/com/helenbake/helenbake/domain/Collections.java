@@ -18,6 +18,7 @@ public class Collections extends BaseEntity {
     private String paymentType;
 
     private String receiptNumber;
+    private String customerName;
 
     public String getReceiptNumber() {
         return receiptNumber;
@@ -49,5 +50,13 @@ public class Collections extends BaseEntity {
 
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 }

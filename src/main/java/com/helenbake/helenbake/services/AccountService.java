@@ -19,6 +19,7 @@ public interface AccountService {
     Account editAccount(AccountCommand account,Account previous, Long id);
     Page<AccountCommand> listAllAccount(BooleanExpression expression, Pageable pageable);
     Page<AccountReportCommand> listAllAccountReport(BooleanExpression expression, Pageable pageable);
+    Page<CollectionCommand> listAccountCollection(BooleanExpression expression, Pageable pageable);
     Page<AccountIDetailsCommand> listAllAccountItems(BooleanExpression expression, Pageable pageable);
     Page<AccountDetailQuantityCommand> listAllAccountQuantityItems(BooleanExpression expression, Pageable pageable);
     Account enableDisableAccount(Account oldValue, Long updatedBy);
@@ -30,5 +31,6 @@ public interface AccountService {
     FileInputStream getCategoryItems() throws IOException;
     AccountCommand getAccountName(Long id);
     List<AccountCommand> getAccount();
-    com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType, Long createdBy,Account account);
+    List<AccountReportCommand> getAccountReport(Collections collections);
+    com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType,String customerName, Long createdBy,Account account);
 }
