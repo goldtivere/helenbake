@@ -15,6 +15,7 @@ public class AccountReportCommand {
     private LocalDate to;
     private String soldBy;
     private String paymentType;
+    private String customerName;
     private LocalDateTime dateCreated;
 
     public Long getId() {
@@ -103,5 +104,13 @@ public class AccountReportCommand {
 
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 }

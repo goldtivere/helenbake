@@ -31,6 +31,7 @@ public class AccountLogToCommand implements Converter<AccountLog, AccountReportC
         accountReportCommand.setTo(source.getCollections().getAccount().getToDate());
         accountReportCommand.setDateCreated(source.getDatecreated());
         accountReportCommand.setPaymentType(source.getCollections().getPaymentType());
+        accountReportCommand.setCustomerName(source.getCollections().getCustomerName());
         return accountReportCommand;
     }
 }

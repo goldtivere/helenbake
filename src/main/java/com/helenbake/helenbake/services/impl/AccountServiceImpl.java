@@ -5,9 +5,11 @@ import com.helenbake.helenbake.converters.*;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.domain.Collections;
 import com.helenbake.helenbake.dto.AccountDto;
+import com.helenbake.helenbake.dto.ReportValue;
 import com.helenbake.helenbake.exception.InvalidDataException;
 import com.helenbake.helenbake.repo.*;
 import com.helenbake.helenbake.services.AccountService;
+import com.helenbake.helenbake.util.JsonConverter;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -399,4 +401,22 @@ public class AccountServiceImpl implements AccountService {
         });
         return accountReportCommands;
 }
+
+    @Override
+    public List<?> detailedReport(Account account,String name) {
+        List<?> reportValues= new ArrayList<>();
+        if(name !=null) {
+            System.out.println("i got here");
+            reportValues = accountItemQuantityRepository.getValt(account,name);
+
+        }
+        else {
+            System.out.println("i got here again");
+            reportValues = accountItemQuantityRepository.getValt(account);
+
+        }
+
+
+        return reportValues;
+    }
 }

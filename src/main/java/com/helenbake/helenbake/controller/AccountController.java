@@ -918,6 +918,30 @@ public class AccountController {
         return ResponseEntity.ok(accountIDetailsCommands);
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
+    @GetMapping("detailedReport/{id}")
+    public ResponseEntity<List<?>> detailedReport(@PathVariable("id") Long id,@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                                         @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
+                                                                         @RequestParam(value = "itemId", required = false) String itemId) {
+
+
+
+        if (id == null || id==0L ) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        Optional<Account> accountOptional=accountRepository.findById(id);
+
+        if(!accountOptional.isPresent())
+        {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<?> reportValues = accountService.detailedReport(accountOptional.get(),itemId);
+        return ResponseEntity.ok(reportValues);
+    }
+
     private CustomPredicateBuilder getAccountCollectionBuilder(String customerName, String receiptNumber, LocalDate fromm, LocalDate too) {
         LocalDateTime frm = null;
         LocalDateTime tt = null;
@@ -935,6 +959,7 @@ public class AccountController {
                 .with("customerName", Operation.LIKE, customerName);
         return builder;
     }
+
 
 
 

@@ -4,6 +4,7 @@ import com.helenbake.helenbake.command.*;
 import com.helenbake.helenbake.domain.*;
 import com.helenbake.helenbake.dto.AccountDto;
 import com.helenbake.helenbake.dto.AccountLog;
+import com.helenbake.helenbake.dto.ReportValue;
 import com.helenbake.helenbake.exception.InvalidDataException;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import org.springframework.data.domain.Page;
@@ -33,4 +34,5 @@ public interface AccountService {
     List<AccountCommand> getAccount();
     List<AccountReportCommand> getAccountReport(Collections collections);
     com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType,String customerName, Long createdBy,Account account);
+    List<?> detailedReport(Account account,String name);
 }
