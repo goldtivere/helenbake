@@ -17,6 +17,10 @@ public class AccountLog extends BaseEntity {
     @JoinColumn(nullable = false, name = "collection_id")
     private Collections collections;
 
+    @ManyToOne
+    @JoinColumn(nullable = false, name = "account_id")
+    private Account account;
+
     private Long quantity;
     @JsonIgnore
     @Transient
@@ -25,6 +29,10 @@ public class AccountLog extends BaseEntity {
     @JsonIgnore
     @Transient
     private String payMethod;
+
+    @JsonIgnore
+    @Transient
+    private String cusName;
     private BigDecimal amountPerItem= new BigDecimal("0.00");
 
     private BigDecimal totalAmount= new BigDecimal("0.00");
@@ -83,5 +91,21 @@ public class AccountLog extends BaseEntity {
 
     public void setPayMethod(String payMethod) {
         this.payMethod = payMethod;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    public void setAccount(Account account) {
+        this.account = account;
+    }
+
+    public String getCusName() {
+        return cusName;
+    }
+
+    public void setCusName(String cusName) {
+        this.cusName = cusName;
     }
 }

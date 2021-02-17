@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -71,23 +72,21 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account createAccount(AccountCommand account, Long id) {
-        if(manipulateAccount(account))
-        {
+        if (manipulateAccount(account)) {
             return null;
         }
-        Account account1= new Account();
+        Account account1 = new Account();
         account1.setToDate(account.getTo());
         account1.setFromDate(account.getFrom());
         account1.setDescription(account.getDescription());
         account1.setAmount(account.getAmount());
         account1.setCreatedBy(id);
-       return accountRepository.saveAndFlush(account1);
+        return accountRepository.saveAndFlush(account1);
     }
 
     @Override
-    public Account editAccount(AccountCommand account,Account previous, Long id) {
-        if(manipulateAccountEdit(account,previous))
-        {
+    public Account editAccount(AccountCommand account, Account previous, Long id) {
+        if (manipulateAccountEdit(account, previous)) {
             return null;
         }
 
@@ -108,7 +107,7 @@ public class AccountServiceImpl implements AccountService {
                     || (account.getFrom().isAfter(account1.getFromDate()) && account.getFrom().isBefore(account1.getToDate()))
                     || account.getFrom().isEqual(account1.getFromDate())
                     || account.getTo().isEqual(account1.getFromDate()) || account.getTo().isEqual(account1.getToDate())) {
-               return true;
+                return true;
 
             }
 
@@ -116,10 +115,10 @@ public class AccountServiceImpl implements AccountService {
         return false;
     }
 
-    private Boolean manipulateAccountEdit(AccountCommand account,Account previous) {
+    private Boolean manipulateAccountEdit(AccountCommand account, Account previous) {
 
         for (Account account1 : accountRepository.findAll()) {
-            if(previous.getId() !=account.getId()) {
+            if (previous.getId() != account.getId()) {
                 if ((account.getTo().isAfter(account1.getFromDate()) && account.getTo().isBefore(account1.getToDate()))
                         || (account.getFrom().isAfter(account1.getFromDate()) && account.getFrom().isBefore(account1.getToDate()))
                         || account.getFrom().isEqual(account1.getFromDate())
@@ -154,13 +153,11 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account enableDisableAccount(Account oldValue, Long updatedBy) {
-        if(oldValue.getAccountstatus().equals(true))
-        {
+        if (oldValue.getAccountstatus().equals(true)) {
             oldValue.setAccountstatus(false);
             oldValue.setUpdatedBy(updatedBy);
             oldValue.setDateupdated(LocalDate.now());
-        }else
-        {
+        } else {
             oldValue.setAccountstatus(true);
             oldValue.setUpdatedBy(updatedBy);
             oldValue.setDateupdated(LocalDate.now());
@@ -216,7 +213,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     private FileInputStream createExcelForCategoryItems() throws IOException {
-        List<CategoryItem> categoryItemList=categoryItemRepository.findAll();
+        List<CategoryItem> categoryItemList = categoryItemRepository.findAll();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("items");
 
@@ -227,20 +224,20 @@ public class AccountServiceImpl implements AccountService {
 
         CellStyle headerCellStyle = workbook.createCellStyle();
         headerCellStyle.setFont(headerFont);
-        String columns[]= {"Id","Item Name","Amount Per Unit"};
+        String columns[] = {"Id", "Item Name", "Amount Per Unit"};
 
         // Create a Row
         Row headerRow = sheet.createRow(0);
-        for(int i = 0; i < columns.length; i++) {
+        for (int i = 0; i < columns.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(columns[i]);
             cell.setCellStyle(headerCellStyle);
         }
         int rowNum = 1;
-        for(CategoryItem categoryItem: categoryItemList) {
+        for (CategoryItem categoryItem : categoryItemList) {
 
             Optional<AccountDetails> accountDetail = accountDetailsRepository.findByCategoryItem(categoryItem);
-            if(!accountDetail.isPresent()) {
+            if (!accountDetail.isPresent()) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0)
                         .setCellValue(categoryItem.getId());
@@ -248,7 +245,7 @@ public class AccountServiceImpl implements AccountService {
                         .setCellValue(categoryItem.getName());
             }
         }
-        for(int i = 0; i < columns.length; i++) {
+        for (int i = 0; i < columns.length; i++) {
             sheet.autoSizeColumn(i);
         }
 
@@ -271,36 +268,33 @@ public class AccountServiceImpl implements AccountService {
         Iterator<Row> rowIterator = sheet.iterator();
         Row row;
         DataFormatter formatter = new DataFormatter();
-        List<AccountDetails> accountDetails= new ArrayList<>();
+        List<AccountDetails> accountDetails = new ArrayList<>();
         while (rowIterator.hasNext()) {
-            AccountDetails accountDetails1= new AccountDetails();
+            AccountDetails accountDetails1 = new AccountDetails();
             row = rowIterator.next();
             if (row.getRowNum() < 1) {
                 continue;
             }
-            Optional<CategoryItem> categoryItem=categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim()));
-            if(!categoryItem.isPresent())
-            {
-               return null;
-            }
-            Optional<AccountDetails> accountDetais= accountDetailsRepository.findByCategoryItem(categoryItem.get());
-            if(accountDetais.isPresent())
-            {
+            Optional<CategoryItem> categoryItem = categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim()));
+            if (!categoryItem.isPresent()) {
                 return null;
             }
-            accountDetails1.setCategoryItem(categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim())).get() );
+            Optional<AccountDetails> accountDetais = accountDetailsRepository.findByCategoryItem(categoryItem.get());
+            if (accountDetais.isPresent()) {
+                return null;
+            }
+            accountDetails1.setCategoryItem(categoryItemRepository.findById(Long.parseLong(formatter.formatCellValue(row.getCell(0)).trim())).get());
 
-            accountDetails1.setPricePerUnit(new BigDecimal(formatter.formatCellValue(row.getCell(2) )));
-            if(Integer.parseInt(accountDetails1.getPricePerUnit().toString()) <=0)
-            {
-                InvalidDataException invalidDataException= new InvalidDataException("Amount cannot be less than or equal to zero");
-                throw  invalidDataException;
+            accountDetails1.setPricePerUnit(new BigDecimal(formatter.formatCellValue(row.getCell(2))));
+            if (Integer.parseInt(accountDetails1.getPricePerUnit().toString()) <= 0) {
+                InvalidDataException invalidDataException = new InvalidDataException("Amount cannot be less than or equal to zero");
+                throw invalidDataException;
             }
             accountDetails1.setCreatedBy(createdBy);
             accountDetails.add(accountDetails1);
         }
 
-        List<AccountDetails> accountDetailsList= accountDetailsRepository.saveAll(accountDetails);
+        List<AccountDetails> accountDetailsList = accountDetailsRepository.saveAll(accountDetails);
         return accountDetailsList;
     }
 
@@ -311,37 +305,30 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     @Override
-    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog,String paymentType,String customerName, Long createdBy,Account account) {
-        Collections collections= saveCollections(accountLog,account,paymentType,customerName,createdBy);
-        AccountLog accountLog1= saveAccountLog(collections,accountLog,createdBy);
+    public AccountLog createAccountLog(com.helenbake.helenbake.dto.AccountLog[] accountLog, String paymentType, String customerName, Long createdBy, Account account) {
+        Collections collections = saveCollections(accountLog, account, paymentType, customerName, createdBy);
+        AccountLog accountLog1 = saveAccountLog(collections, accountLog, account, createdBy);
         accountLog1.setRefCode(collections.getReceiptNumber());
         accountLog1.setPayMethod(collections.getPaymentType());
+        accountLog1.setCusName(collections.getCustomerName());
 
         return accountLog1;
 
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog,Account account,String paymentType,String customerName,Long createdBy)
-    {
-        Collections collections= new Collections();
-        BigDecimal totalVal= new BigDecimal("0.00");
+    private Collections saveCollections(com.helenbake.helenbake.dto.AccountLog[] accountLog, Account account, String paymentType, String customerName, Long createdBy) {
+        Collections collections = new Collections();
+        BigDecimal totalVal = new BigDecimal("0.00");
 
-        for(com.helenbake.helenbake.dto.AccountLog accountLog1: accountLog)
-        {
-            Optional<CategoryItem> categoryItemOption= categoryItemRepository.findById(accountLog1.getCategoryItemId());
-            Optional<AccountDetails> accountDetails= accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
-            totalVal= totalVal.add(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog1.getUnit())));
+        for (com.helenbake.helenbake.dto.AccountLog accountLog1 : accountLog) {
+            Optional<CategoryItem> categoryItemOption = categoryItemRepository.findById(accountLog1.getCategoryItemId());
+            Optional<AccountDetails> accountDetails = accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
+            totalVal = totalVal.add(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog1.getUnit())));
         }
-       Optional<Collections> collections1= collectionRepository.findTopByOrderByIdDesc();
-        if(collections1.isPresent())
-        {
-            collections.setReceiptNumber("HB0"+(collections1.get().getId()+1L));
-        }
-        else
-        {
-            collections.setReceiptNumber("HB0"+1);
-        }
+        Long collections1 = collectionRepository.getcountAccount(account);
+
+            collections.setReceiptNumber("HB0" + (collections1 + 1L));
         collections.setAccount(account);
         collections.setCustomerName(customerName);
         collections.setTotal(totalVal);
@@ -350,23 +337,21 @@ public class AccountServiceImpl implements AccountService {
         return collectionRepository.saveAndFlush(collections);
     }
 
-    private AccountLog saveAccountLog(Collections collections, com.helenbake.helenbake.dto.AccountLog[] accountLogs, Long createdBy)
-    {
+    private AccountLog saveAccountLog(Collections collections, com.helenbake.helenbake.dto.AccountLog[] accountLogs, Account account, Long createdBy) {
         AccountLog accountLogss = new AccountLog();
-        for(com.helenbake.helenbake.dto.AccountLog accountLog: accountLogs)
-        {
-            AccountLog accountLog1= new AccountLog();
-            Optional<CategoryItem> categoryItemOption= categoryItemRepository.findById(accountLog.getCategoryItemId());
-           Optional<AccountDetails> accountDetails= accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
-           accountLog1.setQuantity(accountLog.getUnit());
-           accountLog1.setCategoryItem(categoryItemOption.get());
-           accountLog1.setAmountPerItem(accountDetails.get().getPricePerUnit());
-           accountLog1.setTotalAmount(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog.getUnit())));
-           accountLog1.setCollections(collections);
-           accountLog1.setCreatedBy(createdBy);
+        for (com.helenbake.helenbake.dto.AccountLog accountLog : accountLogs) {
+            AccountLog accountLog1 = new AccountLog();
+            Optional<CategoryItem> categoryItemOption = categoryItemRepository.findById(accountLog.getCategoryItemId());
+            Optional<AccountDetails> accountDetails = accountDetailsRepository.findByCategoryItem(categoryItemOption.get());
+            accountLog1.setQuantity(accountLog.getUnit());
+            accountLog1.setAccount(account);
+            accountLog1.setCategoryItem(categoryItemOption.get());
+            accountLog1.setAmountPerItem(accountDetails.get().getPricePerUnit());
+            accountLog1.setTotalAmount(accountDetails.get().getPricePerUnit().multiply(new BigDecimal(accountLog.getUnit())));
+            accountLog1.setCollections(collections);
+            accountLog1.setCreatedBy(createdBy);
 
-          accountLogss= accountLogRepository.saveAndFlush(accountLog1);
-
+            accountLogss = accountLogRepository.saveAndFlush(accountLog1);
 
 
         }
@@ -376,12 +361,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountCommand> getAccount() {
-        List<AccountCommand> accountCommands= new ArrayList<>();
-         accountRepository.findAll() .forEach(account -> {
+        List<AccountCommand> accountCommands = new ArrayList<>();
+        accountRepository.findAll().forEach(account -> {
             AccountCommand accountCommand = accountToCommand.convert(account);
             accountCommands.add(accountCommand);
         });
-         return accountCommands;
+        return accountCommands.stream().sorted(Comparator.comparingLong(AccountCommand ::getId ).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -394,29 +380,79 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountReportCommand> getAccountReport(Collections collections) {
-        List<AccountReportCommand> accountReportCommands= new ArrayList<>();
-        accountLogRepository.findByCollections(collections) .forEach(account -> {
+        List<AccountReportCommand> accountReportCommands = new ArrayList<>();
+        accountLogRepository.findByCollections(collections).forEach(account -> {
             AccountReportCommand accountCommand = accountLogToCommand.convert(account);
             accountReportCommands.add(accountCommand);
         });
         return accountReportCommands;
-}
+    }
 
     @Override
-    public List<?> detailedReport(Account account,String name) {
-        List<?> reportValues= new ArrayList<>();
-        if(name !=null) {
+    public List<ReportValue> detailedReport(Account account, String name) {
+        List<String> accountLog = new ArrayList<>();
+        List<String> accountQuantity = new ArrayList<>();
+        List<ReportValue> reportValues1 = new ArrayList<>();
+        if (name != null) {
             System.out.println("i got here");
-            reportValues = accountItemQuantityRepository.getValt(account,name);
+            accountLog = accountLogRepository.getValt(account, name);
+            accountQuantity = accountItemQuantityRepository.getValt(account, name);
 
-        }
-        else {
+            for (String m : accountLog) {
+                ReportValue reportValue = new ReportValue();
+                String[] mb = m.split(",");
+
+                for (String mm : accountQuantity) {
+                    String[] mv = mm.split(",");
+
+                    if(mv[0].equalsIgnoreCase(mb[0]))
+                    {
+                        reportValue.setReceived(Long.parseLong(mv[1]));
+                    }
+
+                }
+
+                reportValue.setName(mb[0]);
+                reportValue.setSold(Long.parseLong(mb[1]));
+                reportValue.setPrice(new BigDecimal(mb[2]));
+                reportValues1.add(reportValue);
+            }
+
+
+        } else {
             System.out.println("i got here again");
-            reportValues = accountItemQuantityRepository.getValt(account);
+            accountLog = accountLogRepository.getValt(account);
+            accountQuantity = accountItemQuantityRepository.getValt(account);
+            for (String m : accountLog) {
+                ReportValue reportValue = new ReportValue();
+                String[] mb = m.split(",");
+
+                for (String mm : accountQuantity) {
+                    String[] mv = mm.split(",");
+
+                    if(mv[0].equalsIgnoreCase(mb[0]))
+                    {
+                        reportValue.setReceived(Long.parseLong(mv[1]));
+                    }
+
+                }
+
+                reportValue.setName(mb[0]);
+                reportValue.setSold(Long.parseLong(mb[1]));
+                reportValue.setPrice(new BigDecimal(mb[2]));
+                reportValues1.add(reportValue);
+            }
+
 
         }
 
 
-        return reportValues;
+        return reportValues1;
+    }
+
+    @Override
+    public Long remainingData(Account account, CategoryItem categoryItem) {
+
+        return accountItemQuantityRepository.getValue(account,categoryItem)- accountLogRepository.getValue(account, categoryItem);
     }
 }

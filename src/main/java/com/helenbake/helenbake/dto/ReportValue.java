@@ -6,17 +6,17 @@ import java.math.BigDecimal;
 
 public class ReportValue {
 
-    private CategoryItem categoryItem;
+    private String name;
     private Long received;
     private Long sold;
     private BigDecimal price= new BigDecimal("0.00");
 
-    public CategoryItem getCategoryItem() {
-        return categoryItem;
+    public String getName() {
+        return name;
     }
 
-    public void setCategoryItem(CategoryItem categoryItem) {
-        this.categoryItem = categoryItem;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Long getReceived() {

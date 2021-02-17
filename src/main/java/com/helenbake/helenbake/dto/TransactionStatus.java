@@ -7,6 +7,15 @@ public class TransactionStatus {
     private String add;
     private String message;
     private String methid;
+    private String cusName;
+
+    public String getCusName() {
+        return cusName;
+    }
+
+    public void setCusName(String cusName) {
+        this.cusName = cusName;
+    }
 
     public Boolean getStatus() {
         return status;

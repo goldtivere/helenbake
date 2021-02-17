@@ -601,6 +601,7 @@ public class AccountController {
         transactionStatus.setMessage("Saved Successful");
         transactionStatus.setAdd(accountLog.getRefCode());
         transactionStatus.setMethid(accountLog.getPayMethod());
+        transactionStatus.setCusName(accountLog.getCusName());
         logger.info("New AccountLog created at  " + LocalDateTime.now() + " " + JsonConverter.getJsonRecursive(accountLog));
         return ResponseEntity.ok(transactionStatus);
 
@@ -920,7 +921,7 @@ public class AccountController {
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
     @GetMapping("detailedReport/{id}")
-    public ResponseEntity<List<?>> detailedReport(@PathVariable("id") Long id,@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+    public ResponseEntity<List<ReportValue>> detailedReport(@PathVariable("id") Long id,@RequestParam(value = "page", required = false, defaultValue = "0") int page,
                                                                          @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
                                                                          @RequestParam(value = "itemId", required = false) String itemId) {
 
@@ -938,7 +939,7 @@ public class AccountController {
             return ResponseEntity.notFound().build();
         }
 
-        List<?> reportValues = accountService.detailedReport(accountOptional.get(),itemId);
+        List<ReportValue> reportValues = accountService.detailedReport(accountOptional.get(),itemId);
         return ResponseEntity.ok(reportValues);
     }
 
@@ -961,6 +962,25 @@ public class AccountController {
     }
 
 
-
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','USER')")
+    @GetMapping("remainder/{id}/{catId}")
+    public ResponseEntity<Long> getremainder(@PathVariable("id") Long id,@PathVariable("catId") Long catId) {
+        if(id == 0L)
+        {
+            return ResponseEntity.badRequest().build();
+        }
+        Optional<CategoryItem> categoryItem= categoryItemRepository.findById(catId);
+        Optional<Account> account= accountRepository.findById(id);
+        if(!categoryItem.isPresent())
+        {
+            return ResponseEntity.notFound().build();
+        }
+        if(!account.isPresent())
+        {
+            return ResponseEntity.notFound().build();
+        }
+        Long accountLog= accountService.remainingData(account.get(),categoryItem.get());
+        return ResponseEntity.ok(accountLog);
+    }
 
 }

@@ -34,5 +34,7 @@ public interface AccountService {
     List<AccountCommand> getAccount();
     List<AccountReportCommand> getAccountReport(Collections collections);
     com.helenbake.helenbake.domain.AccountLog createAccountLog(AccountLog[] accountLog,String paymentType,String customerName, Long createdBy,Account account);
-    List<?> detailedReport(Account account,String name);
+    List<ReportValue> detailedReport(Account account,String name);
+    Long remainingData(Account account,CategoryItem categoryItem);
+
 }

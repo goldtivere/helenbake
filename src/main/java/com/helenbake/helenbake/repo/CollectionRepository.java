@@ -10,7 +10,9 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface CollectionRepository  extends JpaRepository<Collections,Long>, QuerydslPredicateExecutor<Collections> {
-   Optional<Collections> findTopByOrderByIdDesc();
+   @Query(value="Select count(s) from Collections s where "
+           + "s.account = ?1 ")
+  Long getcountAccount(Account account);
    @Query(value="Select SUM(s.total) from Collections s where "
            + "s.account = ?1 ")
    BigDecimal sumAmount(Account account);
